@@ -17,6 +17,9 @@ import HospitalDashboard from "./pages/HospitalDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import PaymentTest from "./pages/PaymentTest";
 import NotFound from "./pages/NotFound";
+import Feedback from "./pages/Feedback";
+import Notifications from "./pages/Notifications";
+import { SimpleChatbot } from "./components/SimpleChatbot";
 
 // Protected route component using Clerk
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
@@ -53,6 +56,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Navigation />
+          <SimpleChatbot />
           <Routes>
             {/* Protected root route - only authenticated users can see the home page */}
             <Route path="/" element={
@@ -104,6 +108,16 @@ const App = () => (
             <Route path="/payment-test" element={
               <ProtectedRoute>
                 <PaymentTest />
+              </ProtectedRoute>
+            } />
+            <Route path="/feedback" element={
+              <ProtectedRoute>
+                <Feedback />
+              </ProtectedRoute>
+            } />
+            <Route path="/notifications" element={
+              <ProtectedRoute>
+                <Notifications />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

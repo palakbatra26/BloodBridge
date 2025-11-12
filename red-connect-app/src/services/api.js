@@ -451,6 +451,220 @@ class ApiService {
       throw error;
     }
   }
+
+  async approveCamp(campId, token) {
+    const bases = [API_BASE_URL, 'http://localhost:5002/api', 'http://localhost:5001/api'];
+    let lastError;
+    for (const base of bases) {
+      try {
+        const res = await fetch(`${base}/camps/${campId}/approve`, {
+          method: 'PATCH',
+          headers: this.getHeadersWithToken(token),
+        });
+        if (res.ok) {
+          return await res.json();
+        }
+        const publicRes = await fetch(`${base}/camps/${campId}/approve-public`, {
+          method: 'PATCH',
+          headers: this.getHeadersWithToken(),
+        });
+        if (publicRes.ok) {
+          return await publicRes.json();
+        }
+        lastError = new Error(`HTTP error! status: ${res.status}`);
+        continue;
+      } catch (e) {
+        lastError = e;
+        continue;
+      }
+    }
+    throw lastError || new Error('Failed to approve camp');
+  }
+
+  async rejectCamp(campId, token) {
+    const bases = [API_BASE_URL, 'http://localhost:5002/api', 'http://localhost:5001/api'];
+    let lastError;
+    for (const base of bases) {
+      try {
+        const res = await fetch(`${base}/camps/${campId}/reject`, {
+          method: 'PATCH',
+          headers: this.getHeadersWithToken(token),
+        });
+        if (res.ok) {
+          return await res.json();
+        }
+        const publicRes = await fetch(`${base}/camps/${campId}/reject-public`, {
+          method: 'PATCH',
+          headers: this.getHeadersWithToken(),
+        });
+        if (publicRes.ok) {
+          return await publicRes.json();
+        }
+        lastError = new Error(`HTTP error! status: ${res.status}`);
+        continue;
+      } catch (e) {
+        lastError = e;
+        continue;
+      }
+    }
+    throw lastError || new Error('Failed to reject camp');
+  }
+
+  // Feedback APIs
+  async createFeedback(feedbackData, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify(feedbackData),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating feedback:', error);
+      throw error;
+    }
+  }
+
+  async getFeedbackByTarget(targetType, targetId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback/target/${targetType}/${targetId}`, {
+        headers: this.getHeadersWithToken(),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching feedback:', error);
+      throw error;
+    }
+  }
+
+  async getUserFeedback(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback/user`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching user feedback:', error);
+      throw error;
+    }
+  }
+
+  async markFeedbackHelpful(feedbackId) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback/${feedbackId}/helpful`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error marking feedback helpful:', error);
+      throw error;
+    }
+  }
+
+  async deleteFeedback(feedbackId, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback/${feedbackId}`, {
+        method: 'DELETE',
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error deleting feedback:', error);
+      throw error;
+    }
+  }
+
+  async updateFeedback(feedbackId, feedbackData, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/feedback/${feedbackId}`, {
+        method: 'PUT',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify(feedbackData),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating feedback:', error);
+      throw error;
+    }
+  }
+
+  // GPS Notification APIs
+  async getUserNotifications(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/gps-notifications/user`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  }
+
+  async markNotificationAsRead(notificationId, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/gps-notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  }
+
+  async getNearbyCamps(latitude, longitude, radius = 10) {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/gps-notifications/nearby-camps?latitude=${latitude}&longitude=${longitude}&radius=${radius}`,
+        {
+          headers: this.getHeadersWithToken(),
+        }
+      );
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching nearby camps:', error);
+      throw error;
+    }
+  }
 }
 
 export default new ApiService();

@@ -26,6 +26,250 @@ import featuresImage from "@/assets/features-medical.jpg";
 import dashboardImage from "@/assets/dashboard-illustration.jpg";
 import { useUser } from "@clerk/clerk-react";
 
+// Rotating Facts Component
+function RotatingFactsSection() {
+  const [currentFactSet, setCurrentFactSet] = useState(0);
+
+  const factSets = [
+    // Set 1: Life-Saving Impact
+    {
+      title: "Life-Saving Impact",
+      badge: "Amazing Facts",
+      facts: [
+        {
+          icon: Heart,
+          gradient: "gradient-hero",
+          number: "3 Lives",
+          title: "Saved Per Donation",
+          description: "A single blood donation can save up to three lives. Your one hour can give someone a lifetime.",
+          color: "text-primary"
+        },
+        {
+          icon: Activity,
+          gradient: "gradient-accent",
+          number: "2 Seconds",
+          title: "Someone Needs Blood",
+          description: "Every 2 seconds, someone in the world needs blood. Your donation could be the difference between life and death.",
+          color: "text-accent"
+        },
+        {
+          icon: Droplets,
+          gradient: "gradient-card",
+          number: "36,000",
+          title: "Units Needed Daily",
+          description: "36,000 units of red blood cells are needed every day in the US alone. Be part of the solution.",
+          color: "text-warning"
+        }
+      ],
+      quote: "The blood you donate gives someone another chance at life. One day that someone may be a close relative, a friend, a loved one—or even you."
+    },
+    // Set 2: Health & Recovery
+    {
+      title: "Health & Recovery",
+      badge: "Did You Know?",
+      facts: [
+        {
+          icon: Activity,
+          gradient: "gradient-hero",
+          number: "24 Hours",
+          title: "Plasma Replenishment",
+          description: "Your body replaces the donated plasma within 24 hours. You'll be back to normal in no time!",
+          color: "text-primary"
+        },
+        {
+          icon: Heart,
+          gradient: "gradient-accent",
+          number: "650 Calories",
+          title: "Burned Per Donation",
+          description: "Donating blood burns approximately 650 calories. It's healthy for you and saves lives!",
+          color: "text-accent"
+        },
+        {
+          icon: Shield,
+          gradient: "gradient-card",
+          number: "100% Safe",
+          title: "Sterile Equipment",
+          description: "All equipment is sterile and used only once. Blood donation is completely safe with trained professionals.",
+          color: "text-warning"
+        }
+      ],
+      quote: "Be a hero. Donate blood. Save lives. It's that simple."
+    },
+    // Set 3: Community Impact
+    {
+      title: "Community Impact",
+      badge: "Make a Difference",
+      facts: [
+        {
+          icon: Users,
+          gradient: "gradient-hero",
+          number: "Only 3%",
+          title: "Of People Donate",
+          description: "Only 3% of eligible people donate blood annually. Imagine the impact if more people donated!",
+          color: "text-primary"
+        },
+        {
+          icon: Building2,
+          gradient: "gradient-accent",
+          number: "1 in 7",
+          title: "Hospital Patients",
+          description: "1 in 7 people entering a hospital needs blood. Your donation could help someone you know.",
+          color: "text-accent"
+        },
+        {
+          icon: Calendar,
+          gradient: "gradient-card",
+          number: "Every 3 Months",
+          title: "Donation Frequency",
+          description: "You can safely donate whole blood every 3 months. That's 4 times a year to save 12 lives!",
+          color: "text-warning"
+        }
+      ],
+      quote: "Not all heroes wear capes. Some roll up their sleeves and donate blood."
+    },
+    // Set 4: Blood Types & Compatibility
+    {
+      title: "Blood Types Matter",
+      badge: "Know Your Type",
+      facts: [
+        {
+          icon: Droplets,
+          gradient: "gradient-hero",
+          number: "O-Negative",
+          title: "Universal Donor",
+          description: "O-negative blood can be given to anyone. Only 7% of people have this rare and precious blood type.",
+          color: "text-primary"
+        },
+        {
+          icon: Heart,
+          gradient: "gradient-accent",
+          number: "AB-Positive",
+          title: "Universal Receiver",
+          description: "AB-positive can receive any blood type. Only 3% of people have this blood type.",
+          color: "text-accent"
+        },
+        {
+          icon: Activity,
+          gradient: "gradient-card",
+          number: "8 Types",
+          title: "Blood Groups",
+          description: "There are 8 main blood types. Every type is needed and every donation matters.",
+          color: "text-warning"
+        }
+      ],
+      quote: "Your blood type doesn't matter. What matters is your willingness to help."
+    },
+    // Set 5: Emergency & Medical
+    {
+      title: "Emergency Needs",
+      badge: "Critical Facts",
+      facts: [
+        {
+          icon: Activity,
+          gradient: "gradient-hero",
+          number: "100 Units",
+          title: "Car Accident Victim",
+          description: "A single car accident victim can require up to 100 units of blood. Your donation saves lives in emergencies.",
+          color: "text-primary"
+        },
+        {
+          icon: Heart,
+          gradient: "gradient-accent",
+          number: "5 Days",
+          title: "Platelet Shelf Life",
+          description: "Platelets have a shelf life of only 5 days. Constant donations are needed for cancer patients.",
+          color: "text-accent"
+        },
+        {
+          icon: Users,
+          gradient: "gradient-card",
+          number: "4.5 Million",
+          title: "Americans Need Blood",
+          description: "4.5 million Americans need blood transfusions each year. Be part of their survival story.",
+          color: "text-warning"
+        }
+      ],
+      quote: "Blood donation: Where a small act of kindness creates a lifetime of gratitude."
+    }
+  ];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentFactSet((prev) => (prev + 1) % factSets.length);
+    }, 8000); // Change every 8 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentSet = factSets[currentFactSet];
+
+  return (
+    <>
+      <div className="text-center mb-16">
+        <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+          {currentSet.badge}
+        </Badge>
+        <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
+          {currentSet.title.split(' ')[0]} <span className="text-primary">{currentSet.title.split(' ').slice(1).join(' ')}</span>
+        </h2>
+        <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+          Every donation makes a difference. Here are some amazing facts about blood donation.
+        </p>
+      </div>
+
+      <div className="grid lg:grid-cols-3 gap-8">
+        {currentSet.facts.map((fact, index) => (
+          <Card key={index} className="border-0 shadow-card hover:shadow-hero transition-smooth fade-in group">
+            <CardContent className="p-8 text-center">
+              <div className={`inline-flex p-4 rounded-xl mb-6 ${fact.gradient} shadow-soft`}>
+                <fact.icon className="h-12 w-12 text-white" />
+              </div>
+              <h3 className={`text-4xl font-bold ${fact.color} mb-4`}>{fact.number}</h3>
+              <p className="text-lg text-foreground font-semibold mb-3">{fact.title}</p>
+              <p className="text-muted-foreground">
+                {fact.description}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Inspirational Quote */}
+      <Card className="border-0 shadow-card mt-12 bg-gradient-to-br from-primary/5 to-accent/5">
+        <CardContent className="p-12 text-center">
+          <div className="max-w-3xl mx-auto">
+            <div className="text-6xl text-primary mb-6">"</div>
+            <p className="text-2xl font-medium text-foreground mb-6 leading-relaxed">
+              {currentSet.quote}
+            </p>
+            <div className="flex items-center justify-center space-x-2">
+              <Heart className="h-5 w-5 text-primary fill-primary" />
+              <span className="text-muted-foreground">Every drop counts. Every donor matters.</span>
+              <Heart className="h-5 w-5 text-primary fill-primary" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Progress Indicators */}
+      <div className="flex justify-center gap-2 mt-8">
+        {factSets.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentFactSet(index)}
+            className={`h-2 rounded-full transition-all ${
+              index === currentFactSet 
+                ? 'w-8 bg-primary' 
+                : 'w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50'
+            }`}
+            aria-label={`Go to fact set ${index + 1}`}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const { isLoaded, isSignedIn, user } = useUser();
@@ -427,50 +671,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* User Types Section */}
+      {/* Rotating Blood Donation Facts & Quotes Section */}
       <section className="py-20 bg-muted/30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
-              Who We Serve
-            </Badge>
-            <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
-              Built for Every <span className="text-primary">Stakeholder</span>
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Whether you're a donor, recipient, or healthcare provider, BloodBridge has specialized tools designed for your needs.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-8">
-            {userTypes.map((type, index) => (
-              <Card key={index} className="border-0 shadow-card hover:shadow-hero transition-smooth fade-in group" style={{ animationDelay: `${index * 0.2}s` }}>
-                <CardContent className="p-8">
-                  <div className={`inline-flex p-4 rounded-xl mb-6 ${type.gradient} shadow-soft`}>
-                    <type.icon className="h-8 w-8 text-white" />
-                  </div>
-                  <h3 className="text-2xl font-semibold text-foreground mb-4">{type.title}</h3>
-                  <p className="text-muted-foreground mb-6">{type.description}</p>
-                  
-                  <div className="space-y-3 mb-6">
-                    {type.features.map((feature, featureIndex) => (
-                      <div key={featureIndex} className="flex items-center space-x-3">
-                        <Award className="h-5 w-5 text-accent" />
-                        <span className="text-foreground">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <Link to={isSignedIn ? type.href : "/auth?tab=signin"}>
-                    <Button className="w-full group-hover:scale-105 transition-bounce">
-                      Get Started
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <RotatingFactsSection />
         </div>
       </section>
 

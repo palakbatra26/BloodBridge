@@ -1,0 +1,97 @@
+{
+  "common": {
+    "bloodbridge": "ब्लडब्रिज",
+    "home": "होम",
+    "about": "हमारे बारे में",
+    "contact": "संपर्क करें",
+    "login": "लॉगिन",
+    "signup": "साइन अप",
+    "logout": "लॉगआउट",
+    "submit": "जमा करें",
+    "cancel": "रद्द करें",
+    "save": "सहेजें",
+    "delete": "हटाएं",
+    "edit": "संपादित करें",
+    "search": "खोजें",
+    "loading": "लोड हो रहा है...",
+    "error": "त्रुटि",
+    "success": "सफलता"
+  },
+  "nav": {
+    "bloodCamps": "रक्तदान शिविर",
+    "registerDonor": "दाता के रूप में पंजीकरण करें",
+    "dashboard": "डैशबोर्ड",
+    "notifications": "सूचनाएं"
+  },
+  "home": {
+    "title": "रक्तदान के माध्यम से जीवन बचाएं",
+    "subtitle": "दाताओं को जरूरतमंदों से जोड़ें",
+    "findCamps": "रक्तदान शिविर खोजें",
+    "becomeDonor": "दाता बनें",
+    "urgentRequests": "तत्काल रक्त अनुरोध"
+  },
+  "bloodCamps": {
+    "title": "रक्तदान शिविर",
+    "upcoming": "आगामी शिविर",
+    "location": "स्थान",
+    "date": "तारीख",
+    "time": "समय",
+    "organizer": "आयोजक",
+    "contact": "संपर्क",
+    "register": "शिविर के लिए पंजीकरण करें",
+    "nearYou": "आपके पास के शिविर"
+  },
+  "donor": {
+    "register": "दाता के रूप में पंजीकरण करें",
+    "name": "पूरा नाम",
+    "email": "ईमेल",
+    "phone": "फोन नंबर",
+    "bloodGroup": "रक्त समूह",
+    "age": "आयु",
+    "weight": "वजन (किलो)",
+    "lastDonation": "अंतिम दान की तारीख",
+    "medicalHistory": "चिकित्सा इतिहास",
+    "eligibility": "पात्रता जांचें"
+  },
+  "feedback": {
+    "title": "प्रतिक्रिया और रेटिंग",
+    "rate": "अपने अनुभव को रेट करें",
+    "writeReview": "समीक्षा लिखें",
+    "hospital": "अस्पताल",
+    "camp": "रक्तदान शिविर",
+    "platform": "प्लेटफॉर्म",
+    "service": "सेवा गुणवत्ता",
+    "cleanliness": "स्वच्छता",
+    "staff": "कर्मचारी व्यवहार",
+    "facilities": "सुविधाएं",
+    "overall": "समग्र अनुभव",
+    "submit": "प्रतिक्रिया जमा करें",
+    "helpful": "क्या यह सहायक था?",
+    "reviews": "समीक्षाएं",
+    "averageRating": "औसत रेटिंग"
+  },
+  "notifications": {
+    "title": "सूचनाएं",
+    "campNearby": "आपके पास रक्तदान शिविर!",
+    "urgentRequest": "तत्काल रक्त अनुरोध",
+    "donationReminder": "दान अनुस्मारक",
+    "markAsRead": "पढ़ा हुआ चिह्नित करें",
+    "noNotifications": "कोई सूचना नहीं",
+    "enableLocation": "पास के शिविर अलर्ट पाने के लिए स्थान सक्षम करें"
+  },
+  "chatbot": {
+    "title": "ब्लडब्रिज सहायक",
+    "placeholder": "रक्तदान के बारे में कुछ भी पूछें...",
+    "findCamps": "शिविर खोजें",
+    "checkEligibility": "पात्रता जांचें",
+    "registration": "पंजीकरण",
+    "faqs": "अक्सर पूछे जाने वाले प्रश्न",
+    "voiceInput": "वॉयस इनपुट"
+  },
+  "language": {
+    "select": "भाषा चुनें",
+    "english": "English",
+    "hindi": "हिंदी",
+    "punjabi": "ਪੰਜਾਬੀ"
+  }
+}

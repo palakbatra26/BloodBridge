@@ -1,0 +1,97 @@
+{
+  "common": {
+    "bloodbridge": "BloodBridge",
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact",
+    "login": "Login",
+    "signup": "Sign Up",
+    "logout": "Logout",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "nav": {
+    "bloodCamps": "Blood Camps",
+    "registerDonor": "Register as Donor",
+    "dashboard": "Dashboard",
+    "notifications": "Notifications"
+  },
+  "home": {
+    "title": "Save Lives Through Blood Donation",
+    "subtitle": "Connect donors with those in need",
+    "findCamps": "Find Blood Camps",
+    "becomeDonor": "Become a Donor",
+    "urgentRequests": "Urgent Blood Requests"
+  },
+  "bloodCamps": {
+    "title": "Blood Donation Camps",
+    "upcoming": "Upcoming Camps",
+    "location": "Location",
+    "date": "Date",
+    "time": "Time",
+    "organizer": "Organizer",
+    "contact": "Contact",
+    "register": "Register for Camp",
+    "nearYou": "Camps Near You"
+  },
+  "donor": {
+    "register": "Register as Donor",
+    "name": "Full Name",
+    "email": "Email",
+    "phone": "Phone Number",
+    "bloodGroup": "Blood Group",
+    "age": "Age",
+    "weight": "Weight (kg)",
+    "lastDonation": "Last Donation Date",
+    "medicalHistory": "Medical History",
+    "eligibility": "Check Eligibility"
+  },
+  "feedback": {
+    "title": "Feedback & Ratings",
+    "rate": "Rate Your Experience",
+    "writeReview": "Write a Review",
+    "hospital": "Hospital",
+    "camp": "Blood Camp",
+    "platform": "Platform",
+    "service": "Service Quality",
+    "cleanliness": "Cleanliness",
+    "staff": "Staff Behavior",
+    "facilities": "Facilities",
+    "overall": "Overall Experience",
+    "submit": "Submit Feedback",
+    "helpful": "Was this helpful?",
+    "reviews": "Reviews",
+    "averageRating": "Average Rating"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "campNearby": "Blood Camp Near You!",
+    "urgentRequest": "Urgent Blood Request",
+    "donationReminder": "Donation Reminder",
+    "markAsRead": "Mark as Read",
+    "noNotifications": "No notifications",
+    "enableLocation": "Enable location to get nearby camp alerts"
+  },
+  "chatbot": {
+    "title": "BloodBridge Assistant",
+    "placeholder": "Ask me anything about blood donation...",
+    "findCamps": "Find Camps",
+    "checkEligibility": "Check Eligibility",
+    "registration": "Registration",
+    "faqs": "FAQs",
+    "voiceInput": "Voice Input"
+  },
+  "language": {
+    "select": "Select Language",
+    "english": "English",
+    "hindi": "हिंदी",
+    "punjabi": "ਪੰਜਾਬੀ"
+  }
+}

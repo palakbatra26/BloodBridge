@@ -1,0 +1,97 @@
+{
+  "common": {
+    "bloodbridge": "ਬਲੱਡਬ੍ਰਿਜ",
+    "home": "ਘਰ",
+    "about": "ਸਾਡੇ ਬਾਰੇ",
+    "contact": "ਸੰਪਰਕ ਕਰੋ",
+    "login": "ਲੌਗਇਨ",
+    "signup": "ਸਾਈਨ ਅੱਪ",
+    "logout": "ਲੌਗਆਉਟ",
+    "submit": "ਜਮ੍ਹਾਂ ਕਰੋ",
+    "cancel": "ਰੱਦ ਕਰੋ",
+    "save": "ਸੁਰੱਖਿਅਤ ਕਰੋ",
+    "delete": "ਮਿਟਾਓ",
+    "edit": "ਸੰਪਾਦਿਤ ਕਰੋ",
+    "search": "ਖੋਜੋ",
+    "loading": "ਲੋਡ ਹੋ ਰਿਹਾ ਹੈ...",
+    "error": "ਗਲਤੀ",
+    "success": "ਸਫਲਤਾ"
+  },
+  "nav": {
+    "bloodCamps": "ਖੂਨ ਦਾਨ ਕੈਂਪ",
+    "registerDonor": "ਦਾਨੀ ਵਜੋਂ ਰਜਿਸਟਰ ਕਰੋ",
+    "dashboard": "ਡੈਸ਼ਬੋਰਡ",
+    "notifications": "ਸੂਚਨਾਵਾਂ"
+  },
+  "home": {
+    "title": "ਖੂਨ ਦਾਨ ਰਾਹੀਂ ਜੀਵਨ ਬਚਾਓ",
+    "subtitle": "ਦਾਨੀਆਂ ਨੂੰ ਲੋੜਵੰਦਾਂ ਨਾਲ ਜੋੜੋ",
+    "findCamps": "ਖੂਨ ਦਾਨ ਕੈਂਪ ਲੱਭੋ",
+    "becomeDonor": "ਦਾਨੀ ਬਣੋ",
+    "urgentRequests": "ਤੁਰੰਤ ਖੂਨ ਦੀ ਮੰਗ"
+  },
+  "bloodCamps": {
+    "title": "ਖੂਨ ਦਾਨ ਕੈਂਪ",
+    "upcoming": "ਆਉਣ ਵਾਲੇ ਕੈਂਪ",
+    "location": "ਸਥਾਨ",
+    "date": "ਤਾਰੀਖ",
+    "time": "ਸਮਾਂ",
+    "organizer": "ਆਯੋਜਕ",
+    "contact": "ਸੰਪਰਕ",
+    "register": "ਕੈਂਪ ਲਈ ਰਜਿਸਟਰ ਕਰੋ",
+    "nearYou": "ਤੁਹਾਡੇ ਨੇੜੇ ਕੈਂਪ"
+  },
+  "donor": {
+    "register": "ਦਾਨੀ ਵਜੋਂ ਰਜਿਸਟਰ ਕਰੋ",
+    "name": "ਪੂਰਾ ਨਾਮ",
+    "email": "ਈਮੇਲ",
+    "phone": "ਫੋਨ ਨੰਬਰ",
+    "bloodGroup": "ਖੂਨ ਗਰੁੱਪ",
+    "age": "ਉਮਰ",
+    "weight": "ਭਾਰ (ਕਿਲੋ)",
+    "lastDonation": "ਆਖਰੀ ਦਾਨ ਦੀ ਤਾਰੀਖ",
+    "medicalHistory": "ਮੈਡੀਕਲ ਇਤਿਹਾਸ",
+    "eligibility": "ਯੋਗਤਾ ਜਾਂਚੋ"
+  },
+  "feedback": {
+    "title": "ਫੀਡਬੈਕ ਅਤੇ ਰੇਟਿੰਗ",
+    "rate": "ਆਪਣੇ ਅਨੁਭਵ ਨੂੰ ਰੇਟ ਕਰੋ",
+    "writeReview": "ਸਮੀਖਿਆ ਲਿਖੋ",
+    "hospital": "ਹਸਪਤਾਲ",
+    "camp": "ਖੂਨ ਦਾਨ ਕੈਂਪ",
+    "platform": "ਪਲੇਟਫਾਰਮ",
+    "service": "ਸੇਵਾ ਗੁਣਵੱਤਾ",
+    "cleanliness": "ਸਫਾਈ",
+    "staff": "ਸਟਾਫ ਵਿਵਹਾਰ",
+    "facilities": "ਸਹੂਲਤਾਂ",
+    "overall": "ਸਮੁੱਚਾ ਅਨੁਭਵ",
+    "submit": "ਫੀਡਬੈਕ ਜਮ੍ਹਾਂ ਕਰੋ",
+    "helpful": "ਕੀ ਇਹ ਮਦਦਗਾਰ ਸੀ?",
+    "reviews": "ਸਮੀਖਿਆਵਾਂ",
+    "averageRating": "ਔਸਤ ਰੇਟਿੰਗ"
+  },
+  "notifications": {
+    "title": "ਸੂਚਨਾਵਾਂ",
+    "campNearby": "ਤੁਹਾਡੇ ਨੇੜੇ ਖੂਨ ਦਾਨ ਕੈਂਪ!",
+    "urgentRequest": "ਤੁਰੰਤ ਖੂਨ ਦੀ ਮੰਗ",
+    "donationReminder": "ਦਾਨ ਯਾਦ ਦਿਵਾਉਣਾ",
+    "markAsRead": "ਪੜ੍ਹਿਆ ਹੋਇਆ ਚਿੰਨ੍ਹਿਤ ਕਰੋ",
+    "noNotifications": "ਕੋਈ ਸੂਚਨਾ ਨਹੀਂ",
+    "enableLocation": "ਨੇੜਲੇ ਕੈਂਪ ਅਲਰਟ ਪ੍ਰਾਪਤ ਕਰਨ ਲਈ ਸਥਾਨ ਸਮਰੱਥ ਕਰੋ"
+  },
+  "chatbot": {
+    "title": "ਬਲੱਡਬ੍ਰਿਜ ਸਹਾਇਕ",
+    "placeholder": "ਖੂਨ ਦਾਨ ਬਾਰੇ ਕੁਝ ਵੀ ਪੁੱਛੋ...",
+    "findCamps": "ਕੈਂਪ ਲੱਭੋ",
+    "checkEligibility": "ਯੋਗਤਾ ਜਾਂਚੋ",
+    "registration": "ਰਜਿਸਟ੍ਰੇਸ਼ਨ",
+    "faqs": "ਅਕਸਰ ਪੁੱਛੇ ਜਾਣ ਵਾਲੇ ਸਵਾਲ",
+    "voiceInput": "ਵੌਇਸ ਇਨਪੁੱਟ"
+  },
+  "language": {
+    "select": "ਭਾਸ਼ਾ ਚੁਣੋ",
+    "english": "English",
+    "hindi": "हिंदी",
+    "punjabi": "ਪੰਜਾਬੀ"
+  }
+}

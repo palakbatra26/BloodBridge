@@ -22,9 +22,11 @@ import {
   AlertTriangle,
   Instagram
 } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useEffect, useState } from "react";
 import api from "@/services/api";
 import { useToast } from "@/hooks/use-toast";
+import { CampRatingSection } from "@/components/CampRatingSection";
 
 interface BloodCamp {
   _id: string;
@@ -52,6 +54,7 @@ export default function BloodCamps() {
   const [error, setError] = useState("");
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
   const [showOwnCampForm, setShowOwnCampForm] = useState(false);
+  const [showRegisterPrompt, setShowRegisterPrompt] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<BloodCamp | null>(null);
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
   
@@ -84,8 +87,10 @@ export default function BloodCamps() {
     organizerEmail: "",
     contact: "",
     date: "",
-    time: "",
-    location: "",
+    startTime: "",
+    endTime: "",
+    venue: "",
+    city: "",
     description: "",
   });
 
@@ -280,11 +285,11 @@ export default function BloodCamps() {
       });
       setShowRegistrationForm(false);
       setSelectedCamp(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error during camp registration:", error);
       toast({
         title: "Registration Failed",
-        description: error.message || "There was an error registering for the camp. Please try again.",
+        description: (error instanceof Error ? error.message : undefined) || "There was an error registering for the camp. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -574,17 +579,32 @@ export default function BloodCamps() {
 
           <form onSubmit={async (e) => {
             e.preventDefault();
-            if (!ownCampData.campName || !ownCampData.organizerName || !ownCampData.organizerEmail || !ownCampData.contact || !ownCampData.date || !ownCampData.location) {
+            if (!ownCampData.campName || !ownCampData.organizerName || !ownCampData.organizerEmail || !ownCampData.contact || !ownCampData.date || !ownCampData.venue || !ownCampData.city) {
               toast({ title: 'Missing information', description: 'Please fill all required fields', variant: 'destructive' });
               return;
             }
             try {
-              await api.requestCamp(ownCampData);
+              // Combine venue and city into location
+              const location = `${ownCampData.venue}, ${ownCampData.city}`;
+              const time = ownCampData.startTime && ownCampData.endTime 
+                ? `${ownCampData.startTime} To ${ownCampData.endTime}`
+                : ownCampData.startTime || '';
+              
+              await api.requestCamp({
+                campName: ownCampData.campName,
+                organizerName: ownCampData.organizerName,
+                organizerEmail: ownCampData.organizerEmail,
+                contact: ownCampData.contact,
+                date: ownCampData.date,
+                time,
+                location,
+                description: ownCampData.description
+              });
               toast({ title: 'Submitted', description: 'Your camp registration has been submitted for admin approval.' });
               setShowOwnCampForm(false);
-              setOwnCampData({ campName: '', organizerName: '', organizerEmail: '', contact: '', date: '', time: '', location: '', description: '' });
-            } catch (err: any) {
-              toast({ title: 'Submission failed', description: err?.message || 'Please try again.', variant: 'destructive' });
+              setOwnCampData({ campName: '', organizerName: '', organizerEmail: '', contact: '', date: '', startTime: '', endTime: '', venue: '', city: '', description: '' });
+            } catch (err: unknown) {
+              toast({ title: 'Submission failed', description: (err instanceof Error ? err.message : undefined) || 'Please try again.', variant: 'destructive' });
             }
           }} className="space-y-8">
             <Card className="border-0 shadow-card">
@@ -618,12 +638,23 @@ export default function BloodCamps() {
                     <Input id="date" type="date" value={ownCampData.date} onChange={(e) => setOwnCampData({ ...ownCampData, date: e.target.value })} />
                   </div>
                   <div>
-                    <Label htmlFor="time">Time</Label>
-                    <Input id="time" type="time" value={ownCampData.time} onChange={(e) => setOwnCampData({ ...ownCampData, time: e.target.value })} />
+                    <Label htmlFor="startTime">Start Time *</Label>
+                    <Input id="startTime" type="time" value={ownCampData.startTime} onChange={(e) => setOwnCampData({ ...ownCampData, startTime: e.target.value })} />
                   </div>
                   <div>
-                    <Label htmlFor="location">Location *</Label>
-                    <Input id="location" placeholder="Enter location" value={ownCampData.location} onChange={(e) => setOwnCampData({ ...ownCampData, location: e.target.value })} />
+                    <Label htmlFor="endTime">End Time *</Label>
+                    <Input id="endTime" type="time" value={ownCampData.endTime} onChange={(e) => setOwnCampData({ ...ownCampData, endTime: e.target.value })} />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="venue">Venue *</Label>
+                    <Input id="venue" placeholder="e.g., City Hospital" value={ownCampData.venue} onChange={(e) => setOwnCampData({ ...ownCampData, venue: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="city">City *</Label>
+                    <Input id="city" placeholder="e.g., Delhi" value={ownCampData.city} onChange={(e) => setOwnCampData({ ...ownCampData, city: e.target.value })} />
                   </div>
                 </div>
                 
@@ -794,9 +825,27 @@ export default function BloodCamps() {
                       <div className="p-2 bg-primary/10 rounded-lg mt-1">
                         <MapPin className="h-4 w-4 text-primary" />
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <p className="font-medium text-sm">Location</p>
-                        <p className="text-sm text-muted-foreground">{camp.location}</p>
+                        {(() => {
+                          const parts = camp.location.split(',').map(s => s.trim()).filter(Boolean);
+                          const city = parts.slice(-1)[0] || '';
+                          const venue = parts.slice(0, -1).join(', ') || camp.location;
+                          return (
+                            <>
+                              {venue && <p className="text-sm text-foreground font-medium">{venue}</p>}
+                              {city && venue !== camp.location && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <MapPin className="h-3 w-3" />
+                                  {city}
+                                </p>
+                              )}
+                              {venue === camp.location && (
+                                <p className="text-sm text-muted-foreground">{camp.location}</p>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     </div>
 
@@ -840,6 +889,13 @@ export default function BloodCamps() {
                     >
                       {getCampStatus(camp.date) === "past" ? "Camp Ended" : "Register for Camp"}
                     </Button>
+
+                    {/* Rating Section */}
+                    <CampRatingSection 
+                      campId={camp._id}
+                      campName={camp.name}
+                      campEnded={getCampStatus(camp.date) === "past"}
+                    />
                   </CardContent>
                 </Card>
               ))}
@@ -854,6 +910,8 @@ export default function BloodCamps() {
             Register Your Own Camp
           </Button>
         </div>
+
+
 
         {/* WhatsApp Group Card */}
         <div className="mt-12 max-w-4xl mx-auto">

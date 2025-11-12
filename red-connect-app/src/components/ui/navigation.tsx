@@ -6,6 +6,7 @@ import { Heart, Menu, X, User, Users, Building2, Shield, LogOut, IndianRupee } f
 import { cn } from "@/lib/utils";
 import { downloadReceipt } from "@/services/paymentService";
 import { initiatePayment } from "@/services/razorpayService";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 
 declare global {
   interface Window {
@@ -148,6 +149,9 @@ export function Navigation() {
 
           {/* Desktop Auth/Admin Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Theme Toggle */}
+            <ThemeToggle />
+            
             {/* Donate Button */}
             <Button 
               variant="outline" 
@@ -189,7 +193,8 @@ export function Navigation() {
           </div>
 
           {/* Mobile menu button */}
-          <div className="md:hidden">
+          <div className="md:hidden flex items-center space-x-2">
+            <ThemeToggle />
             <Button
               variant="ghost"
               size="sm"

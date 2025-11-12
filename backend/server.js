@@ -15,6 +15,9 @@ const donorRoutes = require("./routes/donorRoutes");
 const alertRoutes = require("./routes/alertRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const twofaRoutes = require("./routes/twofaRoutes");
+const feedbackRoutes = require("./routes/feedbackRoutes");
+const gpsNotificationRoutes = require("./routes/gpsNotificationRoutes");
+const chatbotRoutes = require("./routes/chatbotRoutes");
 
 const app = express();
 const PORT = 5002;
@@ -50,6 +53,9 @@ app.use("/api", donorRoutes);
 app.use("/api", alertRoutes);
 app.use("/api", notificationRoutes);
 app.use("/api", twofaRoutes);
+app.use("/api/feedback", feedbackRoutes);
+app.use("/api/gps-notifications", gpsNotificationRoutes);
+app.use("/api/chatbot", chatbotRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {
