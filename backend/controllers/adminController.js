@@ -29,7 +29,9 @@ const addBloodCamp = async (req, res) => {
       contactPhone,
       description,
       imageUrl,
-      createdBy // Store the Clerk user ID as a string
+      createdBy, // Store the Clerk user ID as a string
+      status: 'Approved',
+      approved: true,
     });
     
     await camp.save();

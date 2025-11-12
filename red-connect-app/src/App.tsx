@@ -15,6 +15,7 @@ import DonorDashboard from "./pages/DonorDashboard";
 import RecipientDashboard from "./pages/RecipientDashboard";
 import HospitalDashboard from "./pages/HospitalDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
+import PaymentTest from "./pages/PaymentTest";
 import NotFound from "./pages/NotFound";
 
 // Protected route component using Clerk
@@ -98,6 +99,11 @@ const App = () => (
             <Route path="/admin-dashboard" element={
               <ProtectedRoute>
                 <AdminDashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/payment-test" element={
+              <ProtectedRoute>
+                <PaymentTest />
               </ProtectedRoute>
             } />
             <Route path="*" element={<NotFound />} />

@@ -20,6 +20,10 @@ import {
 } from "lucide-react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import { isEligible, nextDonationHint } from "@/features/eligibility";
+import { generateDonorCardSVG } from "@/features/qr";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function DonorDashboard() {
   const navigate = useNavigate();
@@ -58,6 +62,40 @@ export default function DonorDashboard() {
     { date: "2023-11-10", location: "Red Cross Center", points: 200, status: "completed" },
     { date: "2023-09-05", location: "Community Health Center", points: 200, status: "completed" },
   ];
+
+  const [lastDonationDate, setLastDonationDate] = useState<string>("");
+  const eligibleNow = isEligible({
+    id: "self",
+    name: user?.fullName || "Donor",
+    bloodType: donorStats.bloodType as any,
+    lastDonationDate: lastDonationDate || undefined,
+  });
+  const nextEligible = nextDonationHint({
+    id: "self",
+    name: user?.fullName || "Donor",
+    bloodType: donorStats.bloodType as any,
+    lastDonationDate: lastDonationDate || undefined,
+  });
+
+  const donorCardUrl = generateDonorCardSVG({
+    id: user?.id || "self",
+    name: user?.fullName || "Donor",
+    bloodType: donorStats.bloodType,
+  });
+
+  const downloadCertificate = (donation: { date: string; location: string; points: number }) => {
+    const doc = new jsPDF();
+    doc.setFontSize(18);
+    doc.text("BloodBridge Donation Certificate", 14, 22);
+    doc.setFontSize(12);
+    doc.text(`Awarded to: ${user?.fullName || 'Donor'}`, 14, 32);
+    autoTable(doc, {
+      startY: 40,
+      head: [["Date", "Location", "Points"]],
+      body: [[donation.date, donation.location, String(donation.points)]],
+    });
+    doc.save(`donation_certificate_${donation.date}.pdf`);
+  };
 
   const urgentRequests = [
     {
@@ -311,6 +349,9 @@ export default function DonorDashboard() {
                             <Badge variant="outline">
                               Completed
                             </Badge>
+                            <Button size="sm" variant="outline" onClick={() => downloadCertificate(donation)}>
+                              Download Certificate
+                            </Button>
                           </div>
                         </div>
                       ))}
@@ -401,6 +442,9 @@ export default function DonorDashboard() {
                   <Badge className="mt-2 bg-warning/10 text-warning">
                     {donorStats.donorLevel} Donor
                   </Badge>
+                  <div className="mt-4">
+                    <img src={donorCardUrl} alt="Donor QR Card" className="mx-auto border rounded" />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -427,6 +471,22 @@ export default function DonorDashboard() {
                   <Gift className="h-4 w-4 mr-2" />
                   Redeem Rewards
                 </Button>
+                <div className="pt-2">
+                  <p className="text-sm text-muted-foreground mb-2">Eligibility Checker</p>
+                  <input
+                    type="date"
+                    className="w-full border rounded px-2 py-1"
+                    value={lastDonationDate}
+                    onChange={(e) => setLastDonationDate(e.target.value)}
+                  />
+                  <div className="mt-2 text-sm">
+                    {eligibleNow ? (
+                      <span className="text-success">Eligible to donate now</span>
+                    ) : (
+                      <span className="text-muted-foreground">Next eligible: {nextEligible || 'N/A'}</span>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 

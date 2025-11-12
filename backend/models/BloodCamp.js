@@ -41,9 +41,19 @@ const bloodCampSchema = new mongoose.Schema({
     type: String,
     required: false
   },
+  bloodTypes: {
+    type: [String],
+    required: false,
+    default: []
+  },
   imageUrl: {
     type: String,
     required: false
+  },
+  status: {
+    type: String,
+    enum: ['Pending', 'Approved', 'Rejected'],
+    default: 'Pending'
   },
   approved: {
     type: Boolean,

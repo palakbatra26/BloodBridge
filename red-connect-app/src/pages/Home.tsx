@@ -18,7 +18,8 @@ import {
   Shield,
   ChevronDown,
   ChevronRight,
-  Instagram
+  Instagram,
+  IndianRupee
 } from "lucide-react";
 import heroImage from "@/assets/hero-blood-donation.jpg";
 import featuresImage from "@/assets/features-medical.jpg";
@@ -29,6 +30,72 @@ export default function Home() {
   const navigate = useNavigate();
   const { isLoaded, isSignedIn, user } = useUser();
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null); // Added for FAQ toggle
+
+  // Function to handle donation
+  const handleDonation = async (amount: number = 50000, description: string = "Support our blood donation platform") => {
+    try {
+      // Dynamically import the razorpayService to avoid issues with the Razorpay global
+      const { initiatePayment } = await import('@/services/razorpayService');
+      const { downloadReceipt } = await import('@/services/paymentService');
+      
+      // Create a more detailed description based on the amount
+      let detailedDescription = description;
+      if (amount === 10000) {
+        detailedDescription = "Support our blood donation platform - ₹100. Your donation helps provide refreshments for donors at blood camps.";
+      } else if (amount === 50000) {
+        detailedDescription = "Support our blood donation platform - ₹500. Your donation helps organize blood camps and maintain our technology platform.";
+      } else if (amount === 100000) {
+        detailedDescription = "Support our blood donation platform - ₹1000. Your donation helps support transportation for emergency cases and maintain our platform.";
+      } else {
+        detailedDescription = `Support our blood donation platform. Your donation of ₹${(amount/100).toFixed(0)} helps organize blood camps, maintain our technology platform, provide refreshments for donors, and support transportation for emergency cases.`;
+      }
+      
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_example123',
+        amount: amount, // Amount in paise
+        currency: "INR",
+        name: "BloodBridge",
+        description: detailedDescription,
+        image: "/logo.png",
+        prefill: {
+          name: user?.fullName || "",
+          email: user?.primaryEmailAddress?.emailAddress || "",
+        },
+        notes: {
+          address: "BloodBridge Foundation",
+          purpose: "Blood donation platform support",
+          amount: (amount/100).toFixed(0) + " INR"
+        },
+        theme: {
+          color: "#dc2626"
+        }
+      };
+
+      initiatePayment(
+        options,
+        (response) => {
+          // Payment successful
+          alert("Thank you for your donation! Payment ID: " + response.razorpay_payment_id);
+          
+          // Generate and download receipt
+          downloadReceipt(
+            response.razorpay_payment_id,
+            amount,
+            user?.fullName || "Anonymous Donor",
+            user?.primaryEmailAddress?.emailAddress || "N/A"
+          );
+        },
+        (error) => {
+          // Payment failed or error occurred
+          console.error("Payment error:", error);
+          alert("Payment failed. Please try again.");
+        }
+      );
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      alert("Failed to initiate payment. Please try again.");
+    }
+  };
 
   // FAQ data
   const faqs = [
@@ -231,6 +298,131 @@ export default function Home() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Donation Section - NEW */}
+      <section className="py-20 bg-gradient-to-r from-primary/10 to-accent/10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-primary/10 text-primary border-primary/20">
+              Support Our Cause
+            </Badge>
+            <h2 className="text-3xl lg:text-5xl font-bold text-foreground mb-6">
+              Help Us <span className="text-primary">Save More Lives</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Your contribution helps us maintain our platform, organize blood camps, and support those in need.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div className="fade-in">
+              <h3 className="text-2xl font-semibold text-foreground mb-4">How Your Donation Helps</h3>
+              <p className="text-muted-foreground mb-6">
+                Every rupee you donate directly contributes to saving lives through our blood donation platform.
+              </p>
+              <ul className="space-y-3 mb-6">
+                <li className="flex items-start space-x-3">
+                  <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-foreground"><strong>₹50</strong> - Provides refreshments for 5 blood donors</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-foreground"><strong>₹100</strong> - Supports transportation for emergency cases</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-foreground"><strong>₹500</strong> - Organizes a small blood donation camp</span>
+                </li>
+                <li className="flex items-start space-x-3">
+                  <Award className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <span className="text-foreground"><strong>₹1000</strong> - Maintains our technology platform for a month</span>
+                </li>
+              </ul>
+              
+              <div className="bg-card border border-border rounded-lg p-6 mt-8">
+                <h4 className="font-semibold text-foreground mb-3">Where Your Money Goes</h4>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>Blood Camp Organization</span>
+                    <span>40%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Technology Platform</span>
+                    <span>30%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Donor Support & Refreshments</span>
+                    <span>20%</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Emergency Transportation</span>
+                    <span>10%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="slide-up">
+              <Card className="border-0 shadow-card p-8 text-center">
+                <CardContent className="p-0">
+                  <div className="inline-flex p-4 rounded-full bg-primary/10 mb-6">
+                    <IndianRupee className="h-12 w-12 text-primary" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-foreground mb-4">Make a Donation</h3>
+                  <p className="text-muted-foreground mb-6">
+                    Your contribution, no matter how small, makes a big difference in saving lives.
+                  </p>
+                  
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-3 gap-3">
+                      <Button 
+                        variant="outline" 
+                        className="py-6"
+                        onClick={() => {
+                          handleDonation(10000, "Support our blood donation platform - ₹100");
+                        }}
+                      >
+                        ₹100
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="py-6"
+                        onClick={() => {
+                          handleDonation(50000, "Support our blood donation platform - ₹500");
+                        }}
+                      >
+                        ₹500
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        className="py-6"
+                        onClick={() => {
+                          handleDonation(100000, "Support our blood donation platform - ₹1000");
+                        }}
+                      >
+                        ₹1000
+                      </Button>
+                    </div>
+                    
+                    <Button 
+                      size="lg" 
+                      className="w-full gradient-hero text-white py-6 text-lg"
+                      onClick={() => handleDonation()}
+                    >
+                      Donate Custom Amount
+                    </Button>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Secured payment powered by Razorpay. You will be redirected to a secure payment gateway.
+                    <br />A receipt will be automatically downloaded after successful payment.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
         </div>
       </section>

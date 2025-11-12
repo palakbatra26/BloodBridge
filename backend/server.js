@@ -10,16 +10,21 @@ const contactRoutes = require("./routes/contactRoutes");
 const authRoutes = require("./routes/authRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const campRoutes = require("./routes/campRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const donorRoutes = require("./routes/donorRoutes");
+const alertRoutes = require("./routes/alertRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
+const twofaRoutes = require("./routes/twofaRoutes");
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = 5002;
 
 // Middleware
 app.use(
   cors({
     origin: [
-      "http://localhost:8080"
-     
+      "http://localhost:8080",
+      "http://localhost:5173" // Added Vite default port
     ],
     credentials: true,
   })
@@ -40,6 +45,11 @@ app.use("/api", contactRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/camps", campRoutes);
+app.use("/api/payment", paymentRoutes);
+app.use("/api", donorRoutes);
+app.use("/api", alertRoutes);
+app.use("/api", notificationRoutes);
+app.use("/api", twofaRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {

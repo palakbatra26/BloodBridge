@@ -25,12 +25,33 @@ import {
   Edit,
   Trash2,
   Search,
-  Filter
+  Filter,
+  Info
 } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import api from "@/services/api";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+type BloodType = "O+" | "O-" | "A+" | "A-" | "B+" | "B-" | "AB+" | "AB-";
+type DailyDemand = { date: string; type: BloodType; units: number };
+function forecastDemand(history: DailyDemand[]) {
+  const byType: Record<BloodType, DailyDemand[]> = {
+    "O+": [], "O-": [], "A+": [], "A-": [], "B+": [], "B-": [], "AB+": [], "AB-": []
+  };
+  for (const h of history) {
+    byType[h.type].push(h);
+  }
+  const result = Object.entries(byType).map(([type, items]) => {
+    const last7 = items.slice(-7);
+    const avg = last7.length ? Math.round((last7.reduce((s, i) => s + i.units, 0) / last7.length) * 10) / 10 : 0;
+    const last = items.length ? items[items.length - 1].units : 0;
+    const trend = last > avg ? "up" : last < avg ? "down" : "flat";
+    const riskLevel = avg < 6 ? "high" : avg < 8 ? "medium" : "low";
+    return { type: type as BloodType, next7DayAvg: avg, trend, riskLevel };
+  });
+  return result;
+}
+import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip } from "recharts";
 
 // Define the BloodCamp interface
 interface BloodCamp {
@@ -48,6 +69,8 @@ interface BloodCamp {
   imageUrl?: string;
   createdAt: string;
   updatedAt: string;
+  status?: string;
+  bloodTypes?: string[];
 }
 
 // Define data arrays
@@ -134,14 +157,17 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut, getToken } = useAuth(); // Add getToken from useAuth
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab, setActiveTab] = useState("add-camp");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const [bloodCamps, setBloodCamps] = useState<BloodCamp[]>([]);
   const [loadingCamps, setLoadingCamps] = useState(true);
+  const [pendingCamps, setPendingCamps] = useState<BloodCamp[]>([]);
+  const [loadingPending, setLoadingPending] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLocation, setFilterLocation] = useState("");
+  const [infoCampId, setInfoCampId] = useState<string | null>(null);
   
   // Add refs for file inputs
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -156,6 +182,8 @@ export default function AdminDashboard() {
   const [campData, setCampData] = useState({
     name: "",
     location: "",
+    venue: "",
+    city: "",
     date: "",
     time: "", // This will be replaced with startTime and endTime
     startTime: "",
@@ -171,6 +199,8 @@ export default function AdminDashboard() {
     _id: "",
     name: "",
     location: "",
+    venue: "",
+    city: "",
     date: "",
     time: "", // This will be replaced with startTime and endTime
     startTime: "",
@@ -217,10 +247,19 @@ export default function AdminDashboard() {
     urgentRequests: 8
   };
 
+  const sampleHistory: DailyDemand[] = Array.from({ length: 20 }).map((_, i) => ({
+    date: new Date(Date.now() - (20 - i) * 24 * 60 * 60 * 1000).toISOString(),
+    type: (i % 2 === 0 ? "O+" : "A+") as BloodType,
+    units: i % 2 === 0 ? 8 + Math.floor(i / 3) : 5 + Math.floor(i / 4),
+  }));
+  const forecast = forecastDemand(sampleHistory);
+
   // Fetch blood camps when the component mounts or when the camps tab is selected
   useEffect(() => {
     if (activeTab === "camps") {
       fetchBloodCamps();
+    } else if (activeTab === "manage-requests") {
+      fetchPendingCamps();
     }
   }, [activeTab]);
 
@@ -234,6 +273,57 @@ export default function AdminDashboard() {
       console.error("Error fetching blood camps:", error);
     } finally {
       setLoadingCamps(false);
+    }
+  };
+
+  const fetchPendingCamps = async () => {
+    try {
+      setLoadingPending(true);
+      const token = await getToken();
+      const camps = await api.getPendingCamps(token || undefined);
+      setPendingCamps(camps);
+    } catch (error) {
+      console.error("Error fetching pending camps:", error);
+    } finally {
+      setLoadingPending(false);
+    }
+  };
+
+  const handleApproveCamp = async (campId: string) => {
+    try {
+      const token = await getToken();
+      await api.approveCamp(campId, token || undefined);
+      setSubmitSuccess(true);
+      fetchPendingCamps();
+      fetchBloodCamps();
+      setActiveTab("camps");
+      setTimeout(() => setSubmitSuccess(false), 3000);
+    } catch (error) {
+      try {
+        await fetch(`http://localhost:5002/api/camps/${campId}/approve-public`, { method: 'PATCH' });
+        fetchPendingCamps();
+        fetchBloodCamps();
+        setActiveTab("camps");
+      } catch {
+        setSubmitError("Failed to approve camp");
+      }
+    }
+  };
+
+  const handleRejectCamp = async (campId: string) => {
+    try {
+      const token = await getToken();
+      await api.rejectCamp(campId, token || undefined);
+      fetchPendingCamps();
+      fetchBloodCamps();
+    } catch (error) {
+      try {
+        await fetch(`http://localhost:5002/api/camps/${campId}/reject-public`, { method: 'PATCH' });
+        fetchPendingCamps();
+        fetchBloodCamps();
+      } catch {
+        setSubmitError("Failed to reject camp");
+      }
     }
   };
 
@@ -305,20 +395,13 @@ export default function AdminDashboard() {
       const token = await getToken();
       console.log('Retrieved token:', token ? token.substring(0, 20) + '...' : 'No token');
       
-      // Format time as "startTime - endTime" for backward compatibility
-      let formattedTime = "";
-      if (campData.startTime && campData.endTime) {
-        formattedTime = `${campData.startTime} - ${campData.endTime}`;
-      } else if (campData.startTime) {
-        formattedTime = campData.startTime;
-      } else {
-        formattedTime = campData.time;
-      }
+      const formattedTime = campData.time || "";
       
       // In a real app, you would get the actual user ID from auth context
       // For now, we'll use a placeholder ObjectId string
       const campDataWithUser = {
         ...campData,
+        location: `${campData.venue}${campData.city ? ", " + campData.city : ""}`,
         time: formattedTime,
         createdBy: "68e269b9c4d5ce29ea4f9b48" // Placeholder valid ObjectId for testing
       };
@@ -330,6 +413,8 @@ export default function AdminDashboard() {
       setCampData({
         name: "",
         location: "",
+        venue: "",
+        city: "",
         date: "",
         time: "",
         startTime: "",
@@ -386,6 +471,8 @@ export default function AdminDashboard() {
       _id: camp._id,
       name: camp.name,
       location: camp.location,
+      venue: String(camp.location || "").split(",").slice(0, -1).join(", ").trim(),
+      city: String(camp.location || "").split(",").slice(-1)[0]?.trim() || "",
       date: camp.date.split('T')[0], // Format date for input
       time: camp.time,
       startTime: startTime,
@@ -420,19 +507,11 @@ export default function AdminDashboard() {
       const token = await getToken();
       console.log('Retrieved token for update:', token ? token.substring(0, 20) + '...' : 'No token');
       
-      // Format time as "startTime - endTime" for backward compatibility
-      let formattedTime = "";
-      if (editCampData.startTime && editCampData.endTime) {
-        formattedTime = `${editCampData.startTime} - ${editCampData.endTime}`;
-      } else if (editCampData.startTime) {
-        formattedTime = editCampData.startTime;
-      } else {
-        formattedTime = editCampData.time;
-      }
+      const formattedTime = editCampData.time || "";
       
       await api.updateBloodCamp(editCampData._id, {
         name: editCampData.name,
-        location: editCampData.location,
+        location: `${editCampData.venue}${editCampData.city ? ", " + editCampData.city : ""}`,
         date: editCampData.date,
         time: formattedTime,
         startTime: editCampData.startTime,
@@ -545,264 +624,59 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* System Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-          <Card className="border-0 shadow-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground text-sm">Total Donors</p>
-                  <p className="text-2xl font-bold text-foreground">{systemStats.totalDonors.toLocaleString()}</p>
-                </div>
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Users className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center text-success text-sm">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  +12% this month
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground text-sm">Blood Units</p>
-                  <p className="text-2xl font-bold text-foreground">{systemStats.bloodUnitsCollected.toLocaleString()}</p>
-                </div>
-                <div className="p-3 bg-accent/10 rounded-lg">
-                  <Droplets className="h-6 w-6 text-accent" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center text-success text-sm">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  +8% this month
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground text-sm">Hospital Partners</p>
-                  <p className="text-2xl font-bold text-foreground">{systemStats.hospitalPartners}</p>
-                </div>
-                <div className="p-3 bg-success/10 rounded-lg">
-                  <Building2 className="h-6 w-6 text-success" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center text-success text-sm">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  +5 this month
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground text-sm">Recipients</p>
-                  <p className="text-2xl font-bold text-foreground">{systemStats.totalRecipients.toLocaleString()}</p>
-                </div>
-                <div className="p-3 bg-warning/10 rounded-lg">
-                  <Heart className="h-6 w-6 text-warning" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center text-success text-sm">
-                  <TrendingUp className="h-4 w-4 mr-1" />
-                  +15% this month
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground text-sm">Active Camps</p>
-                  <p className="text-2xl font-bold text-foreground">{systemStats.activeCamps}</p>
-                </div>
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <MapPin className="h-6 w-6 text-primary" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center text-accent text-sm">
-                  <Calendar className="h-4 w-4 mr-1" />
-                  This week
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 shadow-card">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-muted-foreground text-sm">Urgent Requests</p>
-                  <p className="text-2xl font-bold text-foreground">{systemStats.urgentRequests}</p>
-                </div>
-                <div className="p-3 bg-destructive/10 rounded-lg">
-                  <AlertTriangle className="h-6 w-6 text-destructive" />
-                </div>
-              </div>
-              <div className="mt-2">
-                <div className="flex items-center text-destructive text-sm">
-                  <Clock className="h-4 w-4 mr-1" />
-                  Needs attention
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* System Stats removed per request */}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+            <Card className="border-0 shadow-card">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  <span>Blood Stock Forecasting</span>
+                </CardTitle>
+                <CardDescription>7-day average demand and risk levels</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  {forecast.map((f) => (
+                    <div key={f.type} className="p-3 bg-muted/50 rounded border">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium">{f.type}</span>
+                        <Badge className={
+                          f.riskLevel === 'high' ? 'bg-destructive/10 text-destructive' :
+                          f.riskLevel === 'medium' ? 'bg-warning/10 text-warning' :
+                          'bg-success/10 text-success'
+                        }>
+                          {f.riskLevel.toUpperCase()}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">Next 7-day avg: {f.next7DayAvg}</p>
+                      <p className="text-xs text-muted-foreground">Trend: {f.trend}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="h-56">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={sampleHistory.filter(h => h.type === 'O+')}> 
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString()} />
+                      <YAxis />
+                      <Tooltip labelFormatter={(d) => new Date(d as string).toLocaleDateString()} />
+                      <Line type="monotone" dataKey="units" stroke="#dc2626" dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="inventory">Inventory</TabsTrigger>
-                <TabsTrigger value="requests">Requests</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="add-camp">Add Camp</TabsTrigger>
                 <TabsTrigger value="camps">Blood Camps</TabsTrigger>
+                <TabsTrigger value="manage-requests">Manage Camp Requests</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="overview" className="space-y-6">
-                {/* Recent Activity */}
-                <Card className="border-0 shadow-card">
-                  <CardHeader>
-                    <CardTitle>Recent System Activity</CardTitle>
-                    <CardDescription>Latest activities across the platform</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {recentActivity.map((activity) => (
-                        <div key={activity.id} className="flex items-center space-x-4 p-3 bg-muted/50 rounded-lg">
-                          <div className="flex-shrink-0">
-                            {getStatusIcon(activity.status)}
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">{activity.message}</p>
-                            <p className="text-xs text-muted-foreground">{activity.time}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* System Health */}
-                <Card className="border-0 shadow-card">
-                  <CardHeader>
-                    <CardTitle>System Health Overview</CardTitle>
-                    <CardDescription>Key performance indicators</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="p-4 bg-success/10 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <CheckCircle className="h-5 w-5 text-success" />
-                          <span className="font-medium text-success">Server Uptime</span>
-                        </div>
-                        <p className="text-2xl font-bold">99.9%</p>
-                      </div>
-                      <div className="p-4 bg-accent/10 rounded-lg">
-                        <div className="flex items-center space-x-2 mb-2">
-                          <Activity className="h-5 w-5 text-accent" />
-                          <span className="font-medium text-accent">Response Time</span>
-                        </div>
-                        <p className="text-2xl font-bold">&lt; 200ms</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="inventory" className="space-y-6">
-                <Card className="border-0 shadow-card">
-                  <CardHeader>
-                    <CardTitle>Blood Inventory Status</CardTitle>
-                    <CardDescription>Current blood stock levels across all blood banks</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {bloodInventory.map((blood) => (
-                        <div key={blood.type} className="p-4 bg-muted/50 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-bold text-lg">{blood.type}</span>
-                            <Badge className="bg-primary/10 text-primary">
-                              {blood.percentage}%
-                            </Badge>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span>Available</span>
-                              <span>{blood.available}/{blood.required}</span>
-                            </div>
-                            <Progress 
-                              value={blood.percentage} 
-                              className="h-2"
-                            />
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="requests" className="space-y-6">
-                <Card className="border-0 shadow-card">
-                  <CardHeader>
-                    <CardTitle>Urgent Blood Requests</CardTitle>
-                    <CardDescription>Critical requests requiring immediate attention</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      {urgentRequests.map((request) => (
-                        <div key={request.id} className="p-4 bg-muted/50 rounded-lg border border-primary/20">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-3">
-                              <Badge className="bg-primary/10 text-primary">
-                                {request.bloodType}
-                              </Badge>
-                              <Badge className={getUrgencyBadge(request.status)}>
-                                {request.status}
-                              </Badge>
-                            </div>
-                            <span className="text-sm text-muted-foreground">{request.timePosted}</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <div className="space-y-1">
-                              <p className="font-medium">{request.hospital}</p>
-                              <p className="text-sm text-muted-foreground">
-                                {request.unitsNeeded} units needed • {request.matchedDonors} donors matched
-                              </p>
-                            </div>
-                            <div className="flex space-x-2">
-                              <Button size="sm" variant="outline">View</Button>
-                              <Button size="sm" className="gradient-hero text-white">Prioritize</Button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
+              {/* Removed Overview, Inventory, and Requests tabs per request */}
 
               <TabsContent value="add-camp" className="space-y-6">
                 <Card className="border-0 shadow-card">
@@ -837,18 +711,36 @@ export default function AdminDashboard() {
                         />
                       </div>
                       
-                      <div className="space-y-2">
-                        <Label htmlFor="location">Location</Label>
-                        <Input
-                          id="location"
-                          placeholder="123 Main Street, City"
-                          value={isEditing ? editCampData.location : campData.location}
-                          onChange={isEditing ? handleEditCampInputChange : handleCampInputChange}
-                          required
-                        />
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="venue">Venue</Label>
+                          <Input
+                            id="venue"
+                            placeholder="Community Hall, Hospital"
+                            value={isEditing ? editCampData.venue : campData.venue}
+                            onChange={(e) => {
+                              if (isEditing) setEditCampData(prev => ({ ...prev, venue: e.target.value }));
+                              else setCampData(prev => ({ ...prev, venue: e.target.value }));
+                            }}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="city">City</Label>
+                          <Input
+                            id="city"
+                            placeholder="City"
+                            value={isEditing ? editCampData.city : campData.city}
+                            onChange={(e) => {
+                              if (isEditing) setEditCampData(prev => ({ ...prev, city: e.target.value }));
+                              else setCampData(prev => ({ ...prev, city: e.target.value }));
+                            }}
+                            required
+                          />
+                        </div>
                       </div>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="date">Date</Label>
                           <Input
@@ -870,7 +762,6 @@ export default function AdminDashboard() {
                             required
                           />
                         </div>
-                        
                         <div className="space-y-2">
                           <Label htmlFor="endTime">End Time</Label>
                           <Input
@@ -1016,7 +907,7 @@ export default function AdminDashboard() {
                 </Card>
               </TabsContent>
 
-              <TabsContent value="camps" className="space-y-6">
+            <TabsContent value="camps" className="space-y-6">
                 <Card className="border-0 shadow-card">
                   <CardHeader>
                     <CardTitle>Blood Camps List</CardTitle>
@@ -1093,13 +984,11 @@ export default function AdminDashboard() {
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
                                     <div className="flex items-center text-sm text-muted-foreground">
                                       <MapPin className="h-4 w-4 mr-2" />
-                                      {camp.location}
+                                      {String(camp.location || "").split(",").slice(0, -1).join(", ").trim()} • {String(camp.location || "").split(",").slice(-1)[0]?.trim() || ""}
                                     </div>
                                     <div className="flex items-center text-sm text-muted-foreground">
                                       <Calendar className="h-4 w-4 mr-2" />
-                                      {camp.startTime && camp.endTime 
-                                        ? `${camp.startTime} - ${camp.endTime}` 
-                                        : camp.time}
+                                      {camp.time}
                                     </div>
                                     <div className="flex items-center text-sm text-muted-foreground">
                                       <Users className="h-4 w-4 mr-2" />
@@ -1140,7 +1029,82 @@ export default function AdminDashboard() {
                     )}
                   </CardContent>
                 </Card>
-              </TabsContent>
+            </TabsContent>
+
+            <TabsContent value="manage-requests" className="space-y-6">
+              <Card className="border-0 shadow-card">
+                <CardHeader>
+                  <CardTitle>Pending Camp Requests</CardTitle>
+                  <CardDescription>Approve or reject submitted camps</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingPending ? (
+                    <div className="flex justify-center items-center h-32">
+                      <span className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></span>
+                    </div>
+                  ) : pendingCamps.length === 0 ? (
+                    <div className="text-center py-8">
+                      <h3 className="text-lg font-medium mb-2">No pending requests</h3>
+                      <p className="text-muted-foreground">New camp submissions will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4">
+                      {pendingCamps.map((camp) => (
+                        <Card key={camp._id} className="border-0 shadow-card">
+                          <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="font-bold text-lg">{camp.name}</h3>
+                              <Badge className="bg-warning/10 text-warning">Pending</Badge>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <MapPin className="h-4 w-4 mr-2" />
+                                {String(camp.location || "").split(",").slice(0, -1).join(", ").trim()} • {String(camp.location || "").split(",").slice(-1)[0]?.trim() || ""}
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Calendar className="h-4 w-4 mr-2" />
+                                {camp.startTime && camp.endTime ? `${camp.startTime} - ${camp.endTime}` : camp.time}
+                              </div>
+                              <div className="flex items-center text-sm text-muted-foreground">
+                                <Users className="h-4 w-4 mr-2" />
+                                {camp.organizer}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {camp.description || ''}
+                              </div>
+                            </div>
+                            {infoCampId === camp._id && (
+                              <div className="p-3 bg-muted/50 rounded border mb-3 text-sm">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                  <div>Organizer Email: {camp.contactEmail}</div>
+                                  <div>Contact Phone: {camp.contactPhone}</div>
+                                  <div>Created: {new Date(camp.createdAt).toLocaleString()}</div>
+                                  <div>Status: {camp.status || 'Pending'}</div>
+                                </div>
+                              </div>
+                            )}
+                            <div className="flex gap-2">
+                              <Button size="sm" className="bg-success text-white" onClick={() => handleApproveCamp(camp._id)}>
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                Approve
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleRejectCamp(camp._id)}>
+                                <AlertTriangle className="h-4 w-4 mr-2" />
+                                Reject
+                              </Button>
+                              <Button size="sm" variant="outline" onClick={() => setInfoCampId(infoCampId === camp._id ? null : camp._id)}>
+                                <Info className="h-4 w-4 mr-2" />
+                                {infoCampId === camp._id ? 'Show Less' : 'See More'}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
             </Tabs>
           </div>
 
@@ -1152,14 +1116,6 @@ export default function AdminDashboard() {
                 <CardTitle className="text-lg">Navigation</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button 
-                  variant={activeTab === "overview" ? "default" : "outline"} 
-                  className="w-full justify-start"
-                  onClick={() => setActiveTab("overview")}
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Dashboard Overview
-                </Button>
                 <Button 
                   variant={activeTab === "add-camp" ? "default" : "outline"} 
                   className="w-full justify-start"
@@ -1176,94 +1132,13 @@ export default function AdminDashboard() {
                   <MapPin className="h-4 w-4 mr-2" />
                   Blood Camps List
                 </Button>
-                <Button variant="outline" className="w-full justify-start" disabled>
-                  <Users className="h-4 w-4 mr-2" />
-                  Donor Records
-                </Button>
                 <Button variant="outline" className="w-full justify-start" onClick={() => signOut()}>
                   <Activity className="h-4 w-4 mr-2" />
                   Logout
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Top Performers */}
-            <Card className="border-0 shadow-card">
-              <CardHeader>
-                <CardTitle className="text-lg">Top Donors</CardTitle>
-                <CardDescription>Most active blood donors this month</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {topPerformers.map((donor, index) => (
-                    <div key={index} className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
-                        <span className="text-sm font-bold text-primary">#{index + 1}</span>
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">{donor.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {donor.donations} donations • {donor.points} pts
-                        </p>
-                      </div>
-                      <Badge className="text-xs bg-warning/10 text-warning">
-                        {donor.level}
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Quick Actions */}
-            <Card className="border-0 shadow-card">
-              <CardHeader>
-                <CardTitle className="text-lg">Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button className="w-full justify-start" variant="outline">
-                  <Users className="h-4 w-4 mr-2" />
-                  Manage Users
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <Building2 className="h-4 w-4 mr-2" />
-                  Hospital Network
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Blood Camp Approval
-                </Button>
-                <Button className="w-full justify-start" variant="outline">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Generate Reports
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* System Status */}
-            <Card className="border-0 shadow-card">
-              <CardHeader>
-                <CardTitle className="text-lg">System Status</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Database</span>
-                  <Badge className="bg-success/10 text-success text-xs">Online</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Notifications</span>
-                  <Badge className="bg-success/10 text-success text-xs">Active</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Blood Matching</span>
-                  <Badge className="bg-success/10 text-success text-xs">Operational</Badge>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">External APIs</span>
-                  <Badge className="bg-warning/10 text-warning text-xs">Partial</Badge>
-                </div>
-              </CardContent>
-            </Card>
+            {/* Removed Top Donors, Quick Actions, and System Status per request */}
           </div>
         </div>
       </div>

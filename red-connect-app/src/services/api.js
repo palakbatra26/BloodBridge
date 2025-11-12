@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:5000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5002/api';
 
 class ApiService {
   // Get headers with authorization using Clerk token
@@ -285,62 +285,169 @@ class ApiService {
     }
   }
 
-  // Get all blood camps (public endpoint)
+  // Get approved blood camps (public endpoint with resilient fallbacks)
   async getBloodCamps(token) {
-    try {
-      // For public endpoint, we don't need to include auth token
-      const response = await fetch(`${API_BASE_URL}/camps`, {
-        headers: this.getHeadersWithToken(), // Don't pass token for public endpoint
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+    const bases = [API_BASE_URL, 'http://localhost:5002/api', 'http://localhost:5001/api'];
+    let lastError;
+    for (const base of bases) {
+      try {
+        const res = await fetch(`${base}/camps/approved`, {
+          headers: this.getHeadersWithToken(),
+        });
+        if (!res.ok) {
+          const errorText = await res.text();
+          lastError = new Error(`HTTP error! status: ${res.status}, message: ${errorText}`);
+          continue;
+        }
+        return await res.json();
+      } catch (e) {
+        lastError = e;
+        continue;
       }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching blood camps:', error);
-      throw error;
     }
+    console.error('Error fetching blood camps:', lastError);
+    throw lastError || new Error('Failed to fetch blood camps');
   }
 
-  // Register for a blood camp
-  async registerForCamp(registrationData, token) {
-    try {
-      const response = await fetch(`${API_BASE_URL}/camps/register`, {
-        method: 'POST',
-        headers: this.getHeadersWithToken(token), // Include auth token
-        body: JSON.stringify(registrationData),
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+  async requestCamp(payload, token) {
+    const bases = [API_BASE_URL, 'http://localhost:5002/api', 'http://localhost:5001/api'];
+    let lastError;
+    for (const base of bases) {
+      try {
+        const response = await fetch(`${base}/camps/request`, {
+          method: 'POST',
+          headers: this.getHeadersWithToken(token),
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          const errorText = await response.text();
+          lastError = new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+          continue;
+        }
+        return await response.json();
+      } catch (e) {
+        lastError = e;
+        continue;
       }
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Error registering for camp:', error);
-      throw error;
     }
+    throw lastError || new Error('Failed to submit camp request');
   }
 
-  // Get registrations for a specific camp
-  async getCampRegistrations(campId, token) {
+  async getPendingCamps(token) {
+    const bases = [API_BASE_URL, 'http://localhost:5002/api', 'http://localhost:5001/api'];
+    let lastError;
+    for (const base of bases) {
+      try {
+        const response = await fetch(`${base}/camps/pending`, {
+          headers: this.getHeadersWithToken(token),
+        });
+        if (response.ok) {
+          return await response.json();
+        }
+        const publicRes = await fetch(`${base}/camps/pending-public`, {
+          headers: this.getHeadersWithToken(),
+        });
+        if (publicRes.ok) {
+          return await publicRes.json();
+        }
+        lastError = new Error(`HTTP error! status: ${response.status}`);
+        continue;
+      } catch (e) {
+        lastError = e;
+        continue;
+      }
+    }
+    throw lastError || new Error('Failed to fetch pending camps');
+  }
+
+  async getHospitalInventory(hospitalId, token) {
     try {
-      const response = await fetch(`${API_BASE_URL}/camps/${campId}/registrations`, {
+      const response = await fetch(`${API_BASE_URL}/hospitals/${hospitalId}/inventory`, {
         headers: this.getHeadersWithToken(token),
       });
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
       }
-      
       return await response.json();
     } catch (error) {
-      console.error('Error fetching camp registrations:', error);
+      console.error('Error fetching hospital inventory:', error);
+      throw error;
+    }
+  }
+
+  async updateHospitalInventory(hospitalId, payload, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/hospitals/${hospitalId}/inventory`, {
+        method: 'PUT',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating hospital inventory:', error);
+      throw error;
+    }
+  }
+
+  async scheduleDonation(payload, token) {
+    // { donorId, campId, slotISO }
+    try {
+      const response = await fetch(`${API_BASE_URL}/donations/schedule`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error scheduling donation:', error);
+      throw error;
+    }
+  }
+
+  // Two-factor authentication (OTP)
+  async requestTwoFactorOTP(payload) {
+    // payload: { email or phone }
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/2fa/send`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending 2FA OTP:', error);
+      throw error;
+    }
+  }
+
+  async verifyTwoFactorOTP(payload) {
+    // payload: { email or phone, otp }
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/2fa/verify`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(),
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error verifying 2FA OTP:', error);
       throw error;
     }
   }

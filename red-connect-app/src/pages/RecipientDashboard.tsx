@@ -22,12 +22,23 @@ import {
 } from "lucide-react";
 import { useUser, useAuth } from "@clerk/clerk-react";
 import { useNavigate } from "react-router-dom";
+import api from "@/services/api";
+import { rankDonorsForRequest } from "@/features/matching";
+import type { Donor, BloodRequest } from "@/features/types";
 
 export default function RecipientDashboard() {
   const navigate = useNavigate();
   const { isLoaded, isSignedIn } = useUser();
-  const { signOut } = useAuth();
+  const { signOut, getToken } = useAuth();
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const [requestBloodType, setRequestBloodType] = useState<string>("");
+  const [requestUnits, setRequestUnits] = useState<number>(1);
+  const [requestHospital, setRequestHospital] = useState<string>("");
+  const [requestCity, setRequestCity] = useState<string>("");
+  const [matchedDonors, setMatchedDonors] = useState<Donor[]>([]);
+  const [ranking, setRanking] = useState<ReturnType<typeof rankDonorsForRequest>>([]);
+  const [matchingError, setMatchingError] = useState<string>("");
+  const [matchingLoading, setMatchingLoading] = useState(false);
 
   // Show loading state while auth state is loading
   if (!isLoaded) {
@@ -116,6 +127,49 @@ export default function RecipientDashboard() {
         return "bg-accent/10 text-accent";
       default:
         return "bg-muted text-muted-foreground";
+    }
+  };
+
+  const handleSubmitRequest = async () => {
+    try {
+      setMatchingError("");
+      setMatchingLoading(true);
+      const token = await getToken();
+      const donors = await api.getDonors({ bloodType: undefined, city: requestCity || undefined }, token || undefined);
+      const donorList: Donor[] = donors.map((d: any) => ({
+        id: d.id,
+        name: d.name,
+        bloodType: d.bloodType,
+        lastDonationDate: d.lastDonationDate,
+      }));
+      setMatchedDonors(donorList);
+      const req: BloodRequest = {
+        id: "req-local",
+        hospital: requestHospital || "",
+        bloodType: requestBloodType as any,
+        unitsNeeded: requestUnits,
+      };
+      const ranked = rankDonorsForRequest(donorList, req);
+      setRanking(ranked);
+      setShowRequestForm(false);
+    } catch (err: any) {
+      setMatchingError(err?.message || "Failed to match donors");
+    } finally {
+      setMatchingLoading(false);
+    }
+  };
+
+  const handleSendSOS = async () => {
+    try {
+      const token = await getToken();
+      await api.sendSOSAlert({
+        bloodType: requestBloodType,
+        unitsNeeded: requestUnits,
+        city: requestCity,
+      }, token || undefined);
+      alert("SOS alert queued for eligible nearby donors");
+    } catch (err) {
+      alert("Failed to send SOS");
     }
   };
 
@@ -212,6 +266,35 @@ export default function RecipientDashboard() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
+                {matchingError && (
+                  <div className="p-3 bg-destructive/10 border border-destructive/20 rounded">
+                    <p className="text-destructive text-sm">{matchingError}</p>
+                  </div>
+                )}
+                {ranking.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Top Matched Donors</h4>
+                      <Button size="sm" variant="outline" onClick={handleSendSOS}>
+                        Send SOS
+                      </Button>
+                    </div>
+                    {ranking.slice(0, 10).map((d) => (
+                      <div key={d.id} className="p-3 bg-muted/50 rounded border">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium">{d.name}</p>
+                            <p className="text-sm text-muted-foreground">{d.bloodType}</p>
+                          </div>
+                          <Badge className="bg-success/10 text-success">Score {d.score.toFixed(2)}</Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {d.eligible ? 'Eligible' : `Next: ${d.nextEligibleDate ? new Date(d.nextEligibleDate).toLocaleDateString() : 'N/A'}`}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {activeRequests.map((request) => (
                   <div key={request.id} className="p-4 bg-muted/50 rounded-lg border border-primary/20">
                     <div className="flex items-center justify-between mb-3">
@@ -258,8 +341,8 @@ export default function RecipientDashboard() {
                       <Button size="sm" variant="outline">
                         View Details
                       </Button>
-                      <Button size="sm" variant="outline">
-                        Edit Request
+                      <Button size="sm" variant="outline" onClick={handleSendSOS}>
+                        Send SOS
                       </Button>
                     </div>
                   </div>
@@ -351,7 +434,7 @@ export default function RecipientDashboard() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="bloodType">Blood Type Required</Label>
-                      <Select>
+                      <Select value={requestBloodType} onValueChange={setRequestBloodType}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select blood type" />
                         </SelectTrigger>
@@ -366,7 +449,7 @@ export default function RecipientDashboard() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="units">Units Needed</Label>
-                      <Input id="units" type="number" placeholder="1" min="1" max="10" />
+                      <Input id="units" type="number" placeholder="1" min="1" max="10" value={requestUnits} onChange={(e) => setRequestUnits(Number(e.target.value))} />
                     </div>
                   </div>
 
@@ -388,7 +471,7 @@ export default function RecipientDashboard() {
 
                   <div className="space-y-2">
                     <Label htmlFor="hospital">Hospital/Medical Facility</Label>
-                    <Input id="hospital" placeholder="Enter hospital name" />
+                    <Input id="hospital" placeholder="Enter hospital name" value={requestHospital} onChange={(e) => setRequestHospital(e.target.value)} />
                   </div>
 
                   <div className="space-y-2">
@@ -407,6 +490,11 @@ export default function RecipientDashboard() {
                   </div>
 
                   <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input id="city" placeholder="Enter city" value={requestCity} onChange={(e) => setRequestCity(e.target.value)} />
+                  </div>
+
+                  <div className="space-y-2">
                     <Label htmlFor="medicalReason">Medical Reason (Optional)</Label>
                     <Textarea 
                       id="medicalReason" 
@@ -418,9 +506,10 @@ export default function RecipientDashboard() {
                   <div className="flex space-x-3 pt-4">
                     <Button 
                       className="flex-1 gradient-hero text-white"
-                      onClick={() => setShowRequestForm(false)}
+                      onClick={handleSubmitRequest}
+                      disabled={matchingLoading || !requestBloodType}
                     >
-                      Submit Request
+                      {matchingLoading ? 'Matching...' : 'Submit Request'}
                     </Button>
                     <Button 
                       variant="outline"

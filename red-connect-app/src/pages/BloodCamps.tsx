@@ -51,6 +51,7 @@ export default function BloodCamps() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showRegistrationForm, setShowRegistrationForm] = useState(false);
+  const [showOwnCampForm, setShowOwnCampForm] = useState(false);
   const [selectedCamp, setSelectedCamp] = useState<BloodCamp | null>(null);
   const [activeFAQ, setActiveFAQ] = useState<number | null>(null);
   
@@ -76,6 +77,17 @@ export default function BloodCamps() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const bloodTypes = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  const [ownCampData, setOwnCampData] = useState({
+    campName: "",
+    organizerName: "",
+    organizerEmail: "",
+    contact: "",
+    date: "",
+    time: "",
+    location: "",
+    description: "",
+  });
 
   // FAQ data
   const faqs = [
@@ -193,12 +205,7 @@ export default function BloodCamps() {
   };
 
   const handleRegisterOwnCampClick = () => {
-    // This will navigate to the camp registration page
-    // For now, we can show a message or redirect
-    toast({
-      title: "Register Your Own Camp",
-      description: "This feature is coming soon. Please contact us to register your own camp.",
-    });
+    setShowOwnCampForm(true);
   };
 
   const handleBackToCamps = () => {
@@ -546,6 +553,89 @@ export default function BloodCamps() {
               >
                 Cancel
               </Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (showOwnCampForm) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-20">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Camp Registration Form</h1>
+              <p className="text-muted-foreground mt-1">Submit your camp for admin approval</p>
+            </div>
+            <Button onClick={() => setShowOwnCampForm(false)} variant="outline">Back to Camps</Button>
+          </div>
+
+          <form onSubmit={async (e) => {
+            e.preventDefault();
+            if (!ownCampData.campName || !ownCampData.organizerName || !ownCampData.organizerEmail || !ownCampData.contact || !ownCampData.date || !ownCampData.location) {
+              toast({ title: 'Missing information', description: 'Please fill all required fields', variant: 'destructive' });
+              return;
+            }
+            try {
+              await api.requestCamp(ownCampData);
+              toast({ title: 'Submitted', description: 'Your camp registration has been submitted for admin approval.' });
+              setShowOwnCampForm(false);
+              setOwnCampData({ campName: '', organizerName: '', organizerEmail: '', contact: '', date: '', time: '', location: '', description: '' });
+            } catch (err: any) {
+              toast({ title: 'Submission failed', description: err?.message || 'Please try again.', variant: 'destructive' });
+            }
+          }} className="space-y-8">
+            <Card className="border-0 shadow-card">
+              <CardHeader>
+                <CardTitle>Camp Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="campName">Camp Name *</Label>
+                    <Input id="campName" value={ownCampData.campName} onChange={(e) => setOwnCampData({ ...ownCampData, campName: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="organizerName">Organizer Name *</Label>
+                    <Input id="organizerName" value={ownCampData.organizerName} onChange={(e) => setOwnCampData({ ...ownCampData, organizerName: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="organizerEmail">Organizer Email *</Label>
+                    <Input id="organizerEmail" type="email" value={ownCampData.organizerEmail} onChange={(e) => setOwnCampData({ ...ownCampData, organizerEmail: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="contact">Contact Number *</Label>
+                    <Input id="contact" value={ownCampData.contact} onChange={(e) => setOwnCampData({ ...ownCampData, contact: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="date">Date *</Label>
+                    <Input id="date" type="date" value={ownCampData.date} onChange={(e) => setOwnCampData({ ...ownCampData, date: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="time">Time</Label>
+                    <Input id="time" type="time" value={ownCampData.time} onChange={(e) => setOwnCampData({ ...ownCampData, time: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Location *</Label>
+                    <Input id="location" placeholder="Enter location" value={ownCampData.location} onChange={(e) => setOwnCampData({ ...ownCampData, location: e.target.value })} />
+                  </div>
+                </div>
+                
+                <div>
+                  <Label htmlFor="description">Description / Notes</Label>
+                  <Textarea id="description" rows={3} value={ownCampData.description} onChange={(e) => setOwnCampData({ ...ownCampData, description: e.target.value })} />
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex gap-4">
+              <Button type="submit" className="gradient-hero text-white">Submit for Approval</Button>
+              <Button type="button" variant="outline" onClick={() => setShowOwnCampForm(false)}>Cancel</Button>
             </div>
           </form>
         </div>

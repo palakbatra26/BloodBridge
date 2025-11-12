@@ -2,14 +2,22 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
-import { Heart, Menu, X, User, Users, Building2, Shield, LogOut } from "lucide-react";
+import { Heart, Menu, X, User, Users, Building2, Shield, LogOut, IndianRupee } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { downloadReceipt } from "@/services/paymentService";
+import { initiatePayment } from "@/services/razorpayService";
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isSignedIn, isLoaded, signOut } = useAuth(); // Add signOut from useAuth
+  const { isSignedIn, isLoaded, signOut } = useAuth();
   const { user } = useUser();
 
   const navItems = [
@@ -19,16 +27,65 @@ export function Navigation() {
     { href: "/contact", label: "Contact" },
   ];
 
-  // Check if user is admin (this would need to be implemented properly with Clerk metadata)
+  // Check if user is admin
   const isAdmin = user?.publicMetadata?.role === "admin";
+
+  // Function to handle donation
+  const handleDonation = async () => {
+    try {
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_example123',
+        amount: 50000, // Amount in paise (50000 paise = ₹500)
+        currency: "INR",
+        name: "BloodBridge",
+        description: "Support our blood donation platform. Your donation helps organize blood camps, maintain our technology platform, provide refreshments for donors, and support transportation for emergency cases.",
+        image: "/logo.png",
+        prefill: {
+          name: user?.fullName || "",
+          email: user?.primaryEmailAddress?.emailAddress || "",
+        },
+        notes: {
+          address: "BloodBridge Foundation",
+          purpose: "Blood donation platform support"
+        },
+        theme: {
+          color: "#dc2626"
+        }
+      };
+
+      initiatePayment(
+        options,
+        (response) => {
+          // Payment successful
+          alert("Thank you for your donation! Payment ID: " + response.razorpay_payment_id);
+          
+          // Generate and download receipt
+          downloadReceipt(
+            response.razorpay_payment_id,
+            50000, // amount in paise
+            user?.fullName || "Anonymous Donor",
+            user?.primaryEmailAddress?.emailAddress || "N/A"
+          );
+        },
+        (error) => {
+          // Payment failed or error occurred
+          console.error("Payment error:", error);
+          alert("Payment failed. Please try again.");
+        }
+      );
+    } catch (error) {
+      console.error("Error initiating payment:", error);
+      alert("Failed to initiate payment. Please try again.");
+    }
+  };
 
   const handleSignout = async () => {
     try {
-      await signOut(); // Use Clerk's signOut function
-      navigate("/auth?tab=signin"); // Navigate to auth page after signout
+      await signOut();
+      navigate("/auth?tab=signin");
     } catch (error) {
       console.error("Signout error:", error);
-      navigate("/auth?tab=signin"); // Navigate to auth page even if signout fails
+      navigate("/auth?tab=signin");
     }
     setIsOpen(false);
   };
@@ -91,6 +148,16 @@ export function Navigation() {
 
           {/* Desktop Auth/Admin Buttons */}
           <div className="hidden md:flex items-center space-x-4">
+            {/* Donate Button */}
+            <Button 
+              variant="outline" 
+              className="flex items-center space-x-2 border-primary text-primary hover:bg-primary/10"
+              onClick={handleDonation}
+            >
+              <IndianRupee className="h-4 w-4" />
+              <span>Donate</span>
+            </Button>
+            
             {isSignedIn ? (
               // User is authenticated
               <div className="flex items-center space-x-4">
@@ -151,6 +218,18 @@ export function Navigation() {
                   {item.label}
                 </Link>
               ))}
+              
+              {/* Mobile Donate Button */}
+              <button
+                className="w-full flex items-center px-3 py-2 text-muted-foreground hover:text-primary transition-smooth"
+                onClick={() => {
+                  setIsOpen(false);
+                  handleDonation();
+                }}
+              >
+                <IndianRupee className="h-4 w-4 mr-2" />
+                Donate
+              </button>
               
               {isAdmin && (
                 <Link
