@@ -825,26 +825,38 @@ export default function BloodCamps() {
                       <div className="p-2 bg-primary/10 rounded-lg mt-1">
                         <MapPin className="h-4 w-4 text-primary" />
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-sm">Location</p>
+                      <div className="flex-1 space-y-2">
                         {(() => {
                           const parts = camp.location.split(',').map(s => s.trim()).filter(Boolean);
                           const city = parts.slice(-1)[0] || '';
                           const venue = parts.slice(0, -1).join(', ') || camp.location;
-                          return (
-                            <>
-                              {venue && <p className="text-sm text-foreground font-medium">{venue}</p>}
-                              {city && venue !== camp.location && (
-                                <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {city}
-                                </p>
-                              )}
-                              {venue === camp.location && (
+                          
+                          if (venue !== camp.location && city) {
+                            // Has both venue and city
+                            return (
+                              <>
+                                <div>
+                                  <p className="font-medium text-sm">Venue</p>
+                                  <p className="text-sm text-foreground">{venue}</p>
+                                </div>
+                                <div>
+                                  <p className="font-medium text-sm">City</p>
+                                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                    <MapPin className="h-3 w-3" />
+                                    {city}
+                                  </p>
+                                </div>
+                              </>
+                            );
+                          } else {
+                            // Only has location (no split)
+                            return (
+                              <div>
+                                <p className="font-medium text-sm">Location</p>
                                 <p className="text-sm text-muted-foreground">{camp.location}</p>
-                              )}
-                            </>
-                          );
+                              </div>
+                            );
+                          }
                         })()}
                       </div>
                     </div>

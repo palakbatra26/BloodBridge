@@ -629,46 +629,6 @@ export default function AdminDashboard() {
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
-            <Card className="border-0 shadow-card">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5 text-primary" />
-                  <span>Blood Stock Forecasting</span>
-                </CardTitle>
-                <CardDescription>7-day average demand and risk levels</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  {forecast.map((f) => (
-                    <div key={f.type} className="p-3 bg-muted/50 rounded border">
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium">{f.type}</span>
-                        <Badge className={
-                          f.riskLevel === 'high' ? 'bg-destructive/10 text-destructive' :
-                          f.riskLevel === 'medium' ? 'bg-warning/10 text-warning' :
-                          'bg-success/10 text-success'
-                        }>
-                          {f.riskLevel.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">Next 7-day avg: {f.next7DayAvg}</p>
-                      <p className="text-xs text-muted-foreground">Trend: {f.trend}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="h-56">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={sampleHistory.filter(h => h.type === 'O+')}> 
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="date" tickFormatter={(d) => new Date(d).toLocaleDateString()} />
-                      <YAxis />
-                      <Tooltip labelFormatter={(d) => new Date(d as string).toLocaleDateString()} />
-                      <Line type="monotone" dataKey="units" stroke="#dc2626" dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="add-camp">Add Camp</TabsTrigger>
@@ -982,9 +942,20 @@ export default function AdminDashboard() {
                                   </div>
                                   
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-                                    <div className="flex items-center text-sm text-muted-foreground">
-                                      <MapPin className="h-4 w-4 mr-2" />
-                                      {String(camp.location || "").split(",").slice(0, -1).join(", ").trim()} • {String(camp.location || "").split(",").slice(-1)[0]?.trim() || ""}
+                                    <div className="space-y-1">
+                                      <div className="flex items-start text-sm">
+                                        <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-primary" />
+                                        <div>
+                                          <div className="font-medium">Venue</div>
+                                          <div className="text-muted-foreground">{String(camp.location || "").split(",").slice(0, -1).join(", ").trim() || "Not specified"}</div>
+                                        </div>
+                                      </div>
+                                      <div className="flex items-start text-sm ml-6">
+                                        <div>
+                                          <div className="font-medium">City</div>
+                                          <div className="text-muted-foreground">{String(camp.location || "").split(",").slice(-1)[0]?.trim() || "Not specified"}</div>
+                                        </div>
+                                      </div>
                                     </div>
                                     <div className="flex items-center text-sm text-muted-foreground">
                                       <Calendar className="h-4 w-4 mr-2" />
@@ -1057,9 +1028,20 @@ export default function AdminDashboard() {
                               <Badge className="bg-warning/10 text-warning">Pending</Badge>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <MapPin className="h-4 w-4 mr-2" />
-                                {String(camp.location || "").split(",").slice(0, -1).join(", ").trim()} • {String(camp.location || "").split(",").slice(-1)[0]?.trim() || ""}
+                              <div className="space-y-1">
+                                <div className="flex items-start text-sm">
+                                  <MapPin className="h-4 w-4 mr-2 mt-0.5 flex-shrink-0 text-primary" />
+                                  <div>
+                                    <div className="font-medium">Venue</div>
+                                    <div className="text-muted-foreground">{String(camp.location || "").split(",").slice(0, -1).join(", ").trim() || "Not specified"}</div>
+                                  </div>
+                                </div>
+                                <div className="flex items-start text-sm ml-6">
+                                  <div>
+                                    <div className="font-medium">City</div>
+                                    <div className="text-muted-foreground">{String(camp.location || "").split(",").slice(-1)[0]?.trim() || "Not specified"}</div>
+                                  </div>
+                                </div>
                               </div>
                               <div className="flex items-center text-sm text-muted-foreground">
                                 <Calendar className="h-4 w-4 mr-2" />

@@ -56,6 +56,46 @@ export function SimpleChatbot() {
     scrollToBottom();
   }, [messages]);
 
+  // Load real hospitals when hospitals tab is opened
+  useEffect(() => {
+    if (activeTab === 'hospitals' && hospitals.length === 0) {
+      loadHospitals();
+    }
+  }, [activeTab]);
+
+  const loadHospitals = async () => {
+    try {
+      setIsLoading(true);
+      const allCamps = await api.getBloodCamps();
+      // Get unique hospitals/organizers from camps
+      const uniqueHospitals = allCamps.reduce((acc: any[], camp: any) => {
+        const existing = acc.find(h => h.organizer === camp.organizer);
+        if (!existing) {
+          const loc = String(camp.location || "");
+          const parts = loc.split(",").map((s: string) => s.trim()).filter(Boolean);
+          const city = parts.slice(-1)[0] || "";
+          const venue = parts.slice(0, -1).join(", ") || loc;
+          
+          acc.push({
+            name: camp.organizer || "Blood Bank",
+            location: venue,
+            city: city,
+            phone: camp.contactPhone,
+            email: camp.contactEmail
+          });
+        }
+        return acc;
+      }, []);
+      
+      setHospitals(uniqueHospitals.slice(0, 10)); // Limit to 10
+    } catch (error) {
+      console.error("Error loading hospitals:", error);
+      toast.error("Failed to load hospitals");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Voice Recognition Setup
   useEffect(() => {
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -123,15 +163,25 @@ export function SimpleChatbot() {
     const last = new Date(lastDate);
     const next = new Date(last);
     next.setDate(next.getDate() + 56); // 56 days = 8 weeks
-    setNextDonationDate(next.toLocaleDateString());
     
     const today = new Date();
     const daysUntil = Math.ceil((next.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     
+    // Format date nicely
+    const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+    const formattedDate = next.toLocaleDateString('en-US', options);
+    
+    setNextDonationDate(formattedDate);
+    
     if (daysUntil > 0) {
-      addMessage("bot", `You can donate again in ${daysUntil} days (${next.toLocaleDateString()}). We'll remind you!`);
+      const weeks = Math.floor(daysUntil / 7);
+      const days = daysUntil % 7;
+      const timeStr = weeks > 0 ? `${weeks} week${weeks > 1 ? 's' : ''} and ${days} day${days !== 1 ? 's' : ''}` : `${daysUntil} day${daysUntil !== 1 ? 's' : ''}`;
+      addMessage("bot", `⏰ You can donate again in ${timeStr} (${formattedDate}). Mark your calendar!`);
+    } else if (daysUntil === 0) {
+      addMessage("bot", `🎉 Today is your eligible date! You can donate now!`);
     } else {
-      addMessage("bot", `You're eligible to donate now! Find a camp near you.`);
+      addMessage("bot", `✅ You're eligible to donate now! Your waiting period ended ${Math.abs(daysUntil)} days ago. Find a camp near you!`);
     }
   };
 
@@ -460,19 +510,30 @@ export function SimpleChatbot() {
                   <span>Next Donation Calculator</span>
                 </div>
                 <div>
-                  <label className="text-sm font-medium">Last Donation Date</label>
+                  <label className="text-sm font-medium">When did you last donate?</label>
                   <Input 
                     type="date" 
                     value={lastDonationDate}
+                    max={new Date().toISOString().split('T')[0]}
                     onChange={(e) => {
                       setLastDonationDate(e.target.value);
                       calculateNextDonation(e.target.value);
                     }}
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    ⏱️ You must wait 56 days (8 weeks) between donations
+                  </p>
                 </div>
                 {nextDonationDate && (
-                  <div className="text-sm bg-background p-3 rounded">
-                    <strong>Next eligible date:</strong> {nextDonationDate}
+                  <div className="bg-background border-2 border-primary/20 p-4 rounded-lg space-y-2">
+                    <div className="flex items-center gap-2 text-primary font-semibold">
+                      <Calendar className="h-4 w-4" />
+                      <span>Next Eligible Date</span>
+                    </div>
+                    <div className="text-lg font-bold">{nextDonationDate}</div>
+                    <div className="text-xs text-muted-foreground">
+                      💡 Set a reminder on your phone so you don't forget!
+                    </div>
                   </div>
                 )}
               </div>
@@ -571,41 +632,61 @@ export function SimpleChatbot() {
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
               <div className="text-center">
                 <Hospital className="h-12 w-12 mx-auto text-primary mb-2" />
-                <h3 className="font-semibold">Nearby Blood Banks</h3>
-                <p className="text-sm text-muted-foreground">Hospitals & Blood Centers</p>
+                <h3 className="font-semibold">Blood Banks & Organizers</h3>
+                <p className="text-sm text-muted-foreground">From our registered camps</p>
               </div>
 
-              <div className="space-y-3">
-                {nearbyHospitals.map((hospital, idx) => (
-                  <div key={idx} className="border rounded-lg p-4 bg-background hover:shadow-md transition-shadow">
-                    <div className="flex items-start gap-3">
-                      <div className="p-2 bg-primary/10 rounded-lg">
-                        <Hospital className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-sm mb-2">{hospital.name}</h4>
-                        <div className="space-y-1 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="h-3 w-3" />
-                            <span>{hospital.distance} away</span>
-                          </div>
-                          <div>{hospital.address}</div>
-                          <a href={`tel:${hospital.phone}`} className="text-primary hover:underline block">
-                            📞 {hospital.phone}
-                          </a>
+              {isLoading ? (
+                <div className="flex justify-center py-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : hospitals.length > 0 ? (
+                <div className="space-y-3">
+                  {hospitals.map((hospital, idx) => (
+                    <div key={idx} className="border rounded-lg p-4 bg-background hover:shadow-md transition-shadow">
+                      <div className="flex items-start gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Hospital className="h-5 w-5 text-primary" />
                         </div>
-                        <Button size="sm" className="w-full mt-3" variant="outline">
-                          <MapPin className="h-3 w-3 mr-1" />
-                          Get Directions
-                        </Button>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-sm mb-2">{hospital.name}</h4>
+                          <div className="space-y-1 text-xs text-muted-foreground">
+                            {hospital.location && (
+                              <div className="flex items-start gap-2">
+                                <MapPin className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                                <span>{hospital.location}</span>
+                              </div>
+                            )}
+                            {hospital.city && (
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">📍 {hospital.city}</span>
+                              </div>
+                            )}
+                            {hospital.phone && (
+                              <a href={`tel:${hospital.phone}`} className="text-primary hover:underline block">
+                                📞 {hospital.phone}
+                              </a>
+                            )}
+                            {hospital.email && (
+                              <a href={`mailto:${hospital.email}`} className="text-primary hover:underline block text-xs">
+                                ✉️ {hospital.email}
+                              </a>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Hospital className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                  <p className="text-sm">No hospitals found. Check back later!</p>
+                </div>
+              )}
 
               <div className="bg-muted/50 p-3 rounded-lg text-xs text-center">
-                <p>💡 Call ahead to confirm blood bank hours and availability</p>
+                <p>💡 These are real organizers from our blood camp database</p>
               </div>
             </div>
           )}

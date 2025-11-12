@@ -11,7 +11,7 @@ import Contact from "./pages/Contact";
 import BloodCamps from "./pages/BloodCamps";
 import RegisterDonor from "./pages/RegisterDonor";
 // Removed RegisterCamp import
-import DonorDashboard from "./pages/DonorDashboard";
+import SimpleDonorDashboard from "./pages/SimpleDonorDashboard";
 import RecipientDashboard from "./pages/RecipientDashboard";
 import HospitalDashboard from "./pages/HospitalDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -87,7 +87,7 @@ const App = () => (
             {/* Removed RegisterCamp route */}
             <Route path="/donor-dashboard" element={
               <ProtectedRoute>
-                <DonorDashboard />
+                <SimpleDonorDashboard />
               </ProtectedRoute>
             } />
             <Route path="/recipient-dashboard" element={
