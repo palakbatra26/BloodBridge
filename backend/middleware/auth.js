@@ -27,6 +27,14 @@ const authorizeAdmin = (req, res, next) => {
   next();
 };
 
+// Require admin middleware (alias for consistency)
+const requireAdmin = (req, res, next) => {
+  if (req.user.userType !== 'admin' && req.user.role !== 'admin') {
+    return res.status(403).json({ message: 'Admin access required' });
+  }
+  next();
+};
+
 // Authorize hospital middleware
 const authorizeHospital = (req, res, next) => {
   if (req.user.userType !== 'hospital' && req.user.userType !== 'admin') {
@@ -38,5 +46,6 @@ const authorizeHospital = (req, res, next) => {
 module.exports = {
   authenticateToken,
   authorizeAdmin,
-  authorizeHospital
+  authorizeHospital,
+  requireAdmin
 };

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, useUser } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
-import { Heart, Menu, X, User, Users, Building2, Shield, LogOut, IndianRupee } from "lucide-react";
+import { Droplets, Menu, X, Shield, LogOut, IndianRupee } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { downloadReceipt } from "@/services/paymentService";
 import { initiatePayment } from "@/services/razorpayService";
@@ -100,7 +100,7 @@ export function Navigation() {
             {/* Logo */}
             <Link to="/" className="flex items-center space-x-2 group">
               <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-smooth">
-                <Heart className="h-6 w-6 text-primary" />
+                <Droplets className="h-6 w-6 text-primary" />
               </div>
               <span className="text-xl font-bold text-foreground">BloodBridge</span>
             </Link>
@@ -123,7 +123,7 @@ export function Navigation() {
           {/* Logo */}
           <Link to={isSignedIn ? "/" : "/auth?tab=signin"} className="flex items-center space-x-2 group">
             <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-smooth">
-              <Heart className="h-6 w-6 text-primary" />
+              <Droplets className="h-6 w-6 text-primary" />
             </div>
             <span className="text-xl font-bold text-foreground">BloodBridge</span>
           </Link>

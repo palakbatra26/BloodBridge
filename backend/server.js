@@ -18,6 +18,7 @@ const twofaRoutes = require("./routes/twofaRoutes");
 const feedbackRoutes = require("./routes/feedbackRoutes");
 const gpsNotificationRoutes = require("./routes/gpsNotificationRoutes");
 const chatbotRoutes = require("./routes/chatbotRoutes");
+const adminAnalyticsRoutes = require("./routes/adminAnalyticsRoutes");
 
 const app = express();
 const PORT = 5002;
@@ -56,6 +57,7 @@ app.use("/api", twofaRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/gps-notifications", gpsNotificationRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+app.use("/api/admin", adminAnalyticsRoutes);
 
 // Health check route
 app.get("/health", (req, res) => {

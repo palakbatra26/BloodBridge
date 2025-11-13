@@ -3,11 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Mic, X, Send, MapPin, Heart, Info, Bot, Search, Navigation } from "lucide-react";
+import { MessageCircle, Mic, X, Send, MapPin, Heart, Info, Bot, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
 import { useAccessibility } from "@/providers/accessibility-provider";
-import { toast } from "sonner";
 
 type Message = { role: "user" | "bot"; text: string };
 
@@ -96,8 +95,6 @@ export function Chatbot() {
   const [isLoading, setIsLoading] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null);
-  const [locationEnabled, setLocationEnabled] = useState(false);
 
   function pushBot(text: string) {
     setMessages(prev => [...prev, { role: "bot", text }]);
@@ -107,27 +104,6 @@ export function Chatbot() {
   function pushUser(text: string) {
     setMessages(prev => [...prev, { role: "user", text }]);
   }
-
-  // Get user's GPS location
-  const getUserLocation = () => {
-    if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude
-          });
-          setLocationEnabled(true);
-          pushBot("Location enabled! I can now help you find nearby blood camps.");
-        },
-        (error) => {
-          pushBot("Unable to access your location. Please enable location services or search by city name.");
-        }
-      );
-    } else {
-      pushBot("Geolocation is not supported by your browser. Please search by city name.");
-    }
-  };
 
   const recognitionRef = useRef<any | null>(null);
   const [voiceActive, setVoiceActive] = useState(false);

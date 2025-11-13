@@ -613,6 +613,222 @@ class ApiService {
     }
   }
 
+  // Admin Analytics APIs
+  async getAdminAnalytics(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/analytics`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching admin analytics:', error);
+      throw error;
+    }
+  }
+
+  async getAuditLogs(type = 'all', limit = 50, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/audit-logs?type=${type}&limit=${limit}`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching audit logs:', error);
+      throw error;
+    }
+  }
+
+  async sendBulkEmail(content, targetIds, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/bulk-email`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify({ content, targetIds }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending bulk email:', error);
+      throw error;
+    }
+  }
+
+  async sendBulkSMS(content, targetIds, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/bulk-sms`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify({ content, targetIds }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error sending bulk SMS:', error);
+      throw error;
+    }
+  }
+
+  async bulkApproveCamps(campIds, token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/bulk-approve`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(token),
+        body: JSON.stringify({ campIds }),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error bulk approving camps:', error);
+      throw error;
+    }
+  }
+
+  async exportDonors(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/export/donors`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return response; // Return response for blob handling
+    } catch (error) {
+      console.error('Error exporting donors:', error);
+      throw error;
+    }
+  }
+
+  async exportCamps(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/export/camps`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return response; // Return response for blob handling
+    } catch (error) {
+      console.error('Error exporting camps:', error);
+      throw error;
+    }
+  }
+
+  async exportAuditLogs(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/audit-logs/export`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return response; // Return response for blob handling
+    } catch (error) {
+      console.error('Error exporting audit logs:', error);
+      throw error;
+    }
+  }
+
+  async getFeedbackStats(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/feedback-stats`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching feedback stats:', error);
+      throw error;
+    }
+  }
+
+  async getGeographicDistribution(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/geographic-distribution`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching geographic distribution:', error);
+      throw error;
+    }
+  }
+
+  async getMonthlyReport(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/reports/monthly`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching monthly report:', error);
+      throw error;
+    }
+  }
+
+  async exportCampsWithRatings(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/export/camps-with-ratings`, {
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return response; // Return response for blob handling
+    } catch (error) {
+      console.error('Error exporting camps with ratings:', error);
+      throw error;
+    }
+  }
+
+  async bulkApproveAllCamps(token) {
+    try {
+      const response = await fetch(`${API_BASE_URL}/admin/bulk-approve-all`, {
+        method: 'POST',
+        headers: this.getHeadersWithToken(token),
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error('Error bulk approving all camps:', error);
+      throw error;
+    }
+  }
+
   // GPS Notification APIs
   async getUserNotifications(token) {
     try {
