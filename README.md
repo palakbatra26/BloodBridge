@@ -31,7 +31,6 @@ BloodBridge is a comprehensive blood donation management platform that connects 
 - **AI Chatbot**: 24/7 assistance for all blood donation queries
 - **GPS Location**: Find nearby blood camps and donation centers
 - **Eligibility Checker**: Instant eligibility verification
-- **Multi-language Support**: Available in English, Hindi, and Punjabi
 - **Rating System**: Rate and review blood camps
 - **Feedback System**: Share your donation experience
 
